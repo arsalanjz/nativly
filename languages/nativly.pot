@@ -1,0 +1,601 @@
+# Copyright (C) 2026 Arsalan Jabarzare
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Nativly 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/arsalanjz/nativly/issues\n"
+"Last-Translator: Arsalan Jabarzare <arsalanjz@gmail.com>\n"
+"Language-Team: Persian, English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-30T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
+"X-Domain: nativly\n"
+
+#. Plugin Name of the plugin
+msgid "Nativly"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://github.com/arsalanjz/nativly"
+msgstr ""
+
+#. Description of the plugin
+msgid "Transform your WordPress & WooCommerce site into a high-performance native-feeling mobile app with an expanding pill glassmorphic bottom navigation bar, smart PWA engine, and seamless iOS Safari Add-to-Home-Screen experience."
+msgstr ""
+
+#. Author of the plugin
+msgid "Arsalan Jabarzare"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://github.com/arsalanjz"
+msgstr ""
+
+#: includes/class-ntv-activator.php:117
+msgid "Home"
+msgstr ""
+
+#: includes/class-ntv-activator.php:128
+msgid "Courses"
+msgstr ""
+
+#: includes/class-ntv-activator.php:139
+msgid "Shop"
+msgstr ""
+
+#: includes/class-ntv-activator.php:150
+msgid "Cart"
+msgstr ""
+
+#: includes/class-ntv-activator.php:161
+msgid "My Account"
+msgstr ""
+
+#: includes/class-ntv-settings.php:68
+msgid "Nativly PWA & Navbar"
+msgstr ""
+
+#: includes/class-ntv-settings.php:127
+msgid "کش PWA با موفقیت پاک‌سازی و بروزرسانی شد!"
+msgstr ""
+
+#: includes/class-ntv-settings.php:128
+msgid "آیا از بازنشانی کلیه تنظیمات به حالت اولیه اطمینان دارید؟"
+msgstr ""
+
+#: includes/class-ntv-settings.php:129
+msgid "انتخاب آیکون"
+msgstr ""
+
+#: includes/class-ntv-settings.php:130
+msgid "کپی شد!"
+msgstr ""
+
+#: includes/class-ntv-settings.php:146
+#: includes/class-ntv-settings.php:165
+#: includes/class-ntv-settings.php:183
+#: includes/class-ntv-settings.php:268
+#: includes/class-ntv-settings.php:288
+msgid "اجازه دسترسی ندارید."
+msgstr ""
+
+#: includes/class-ntv-settings.php:175
+msgid "تنظیمات با موفقیت درون‌ریزی شدند."
+msgstr ""
+
+#: includes/class-ntv-settings.php:177
+msgid "فایل انتخابی معتبر نیست."
+msgstr ""
+
+#: includes/class-ntv-settings.php:200
+msgid "تنظیمات Nativly با موفقیت ذخیره شدند."
+msgstr ""
+
+#: includes/class-ntv-settings.php:275
+msgid "کش PWA با موفقیت پاک‌سازی شد. کلاینت‌ها در بارگذاری بعدی نسخه جدید را دریافت خواهند کرد."
+msgstr ""
+
+#: includes/class-ntv-settings.php:294
+msgid "تمامی تنظیمات با موفقیت به حالت پیش‌فرض بازگردانی شدند."
+msgstr ""
+
+#: includes/class-ntv-settings.php:316
+msgid "تبدیل وردپرس به اپلیکیشن بومی با نوبار گسترش‌پذیر شیشه‌ای و PWA"
+msgstr ""
+
+#: includes/class-ntv-settings.php:322
+#: includes/class-ntv-settings.php:605
+msgid "پاک‌سازی کش PWA"
+msgstr ""
+
+#: includes/class-ntv-settings.php:326
+msgid "ذخیره تنظیمات"
+msgstr ""
+
+#: includes/class-ntv-settings.php:340
+msgid "آیتم‌های نوبار"
+msgstr ""
+
+#: includes/class-ntv-settings.php:341
+msgid "طراحی شیشه‌ای و استایل"
+msgstr ""
+
+#: includes/class-ntv-settings.php:342
+msgid "قالب و حس اپلیکیشن"
+msgstr ""
+
+#: includes/class-ntv-settings.php:343
+msgid "اپلیکیشن و PWA"
+msgstr ""
+
+#: includes/class-ntv-settings.php:344
+msgid "ابزارها و کش"
+msgstr ""
+
+#: includes/class-ntv-settings.php:345
+msgid "وضعیت و عیب‌یابی"
+msgstr ""
+
+#: includes/class-ntv-settings.php:354
+msgid "منبع آیتم‌های نوبار"
+msgstr ""
+
+#: includes/class-ntv-settings.php:358
+msgid "منوساز اختصاصی Nativly (پیشنهادی)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:359
+msgid "قابلیت تغییر آیکون، نشان (Badge)، و تعیین دسترسی اختصاصی برای هر آیتم."
+msgstr ""
+
+#: includes/class-ntv-settings.php:363
+msgid "فهرست پیش‌فرض وردپرس"
+msgstr ""
+
+#: includes/class-ntv-settings.php:364
+msgid "استفاده از فهرست‌های استاندارد وردپرس (مناسب برای سازگاری خودکار با WPML و Polylang)."
+msgstr ""
+
+#: includes/class-ntv-settings.php:369
+msgid "انتخاب فهرست وردپرس:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:371
+msgid "— انتخاب فهرست —"
+msgstr ""
+
+#: includes/class-ntv-settings.php:384
+msgid "آیتم‌های نوار ناوبری"
+msgstr ""
+
+#: includes/class-ntv-settings.php:385
+msgid "با درگ اند دراپ ترتیب آیتم‌ها را تغییر دهید. تب فعال به طور خودکار باز می‌شود."
+msgstr ""
+
+#: includes/class-ntv-settings.php:388
+msgid "افزودن آیتم جدید"
+msgstr ""
+
+#: includes/class-ntv-settings.php:403
+msgid "پالت‌ها و پریست‌های آماده (یک‌کلیک)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:404
+msgid "یکی از پریست‌های استاندارد را انتخاب کنید یا رنگ‌ها را مطابق سلیقه خود تغییر دهید:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:410
+msgid "شیشه تیره + کپسول آبی نئون"
+msgstr ""
+
+#: includes/class-ntv-settings.php:415
+msgid "شیشه شفاف روشن + متن تیره"
+msgstr ""
+
+#: includes/class-ntv-settings.php:420
+msgid "شیشه شکلاتی گرم + کپسول طلایی"
+msgstr ""
+
+#: includes/class-ntv-settings.php:425
+msgid "شیشه تیره + کپسول زمردی"
+msgstr ""
+
+#: includes/class-ntv-settings.php:432
+msgid "تنظیمات رنگ و شفافیت نوبار"
+msgstr ""
+
+#: includes/class-ntv-settings.php:435
+msgid "رنگ کپسول فعال (Active Pill):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:439
+msgid "رنگ متن و آیکون تب فعال:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:443
+msgid "رنگ آیکون‌های غیرفعال:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:447
+msgid "رنگ پس‌زمینه شیشه (Glass Background):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:453
+msgid "میزان تاری شیشه (Backdrop Blur):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:457
+msgid "گردی لبه‌ها (Border Radius):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:464
+msgid "موقعیت و فواصل نمایش"
+msgstr ""
+
+#: includes/class-ntv-settings.php:467
+msgid "وضعیت نوبار در مانیتور دسکتاپ:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:469
+msgid "مخفی در دسکتاپ (پیشنهادی جهت امنیت قالب)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:470
+msgid "شناور در پایین صفحه دسکتاپ"
+msgstr ""
+
+#: includes/class-ntv-settings.php:471
+msgid "شناور در بالای صفحه دسکتاپ"
+msgstr ""
+
+#: includes/class-ntv-settings.php:475
+msgid "فاصله شناوری از پایین در موبایل (px):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:485
+msgid "مخفی‌سازی هوشمند هدر قالب اصلی"
+msgstr ""
+
+#: includes/class-ntv-settings.php:486
+msgid "جلوگیری از نمایش همزمان دو نوار ناوبری با مخفی‌کردن هدر قالب فقط در ابعاد موبایل:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:490
+msgid "فعال‌سازی مخفی‌سازی خودکار هدر قالب"
+msgstr ""
+
+#: includes/class-ntv-settings.php:495
+msgid "قالب یا صفحه‌ساز فعال:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:501
+msgid "سلکتور CSS دلخواه (Custom)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:505
+msgid "دستگاه‌های هدف مخفی‌سازی:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:507
+msgid "فقط موبایل (زیر 768 پیکسل - امن‌ترین حالت)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:508
+msgid "موبایل و تبلت (زیر 1024 پیکسل)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:509
+msgid "کلیه دستگاه‌ها"
+msgstr ""
+
+#: includes/class-ntv-settings.php:515
+msgid "سلکتور CSS هدر قالب:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:522
+msgid "حس اپلیکیشن بومی (Native App Feel)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:526
+msgid "پشتیبانی از Safe Area آیفون (env(safe-area-inset-bottom))"
+msgstr ""
+
+#: includes/class-ntv-settings.php:527
+msgid "جلوگیری از همپوشانی نوبار با خط هوم اسکرین در آیفون‌های دارای ناچ یا Dynamic Island."
+msgstr ""
+
+#: includes/class-ntv-settings.php:533
+msgid "غیرفعال‌سازی افکت کشسانی مرورگر (overscroll-behavior-y: none)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:534
+msgid "جلوگیری از Pull-to-refresh ناخواسته مرورگر برای ایجاد حس نرم‌افزار نصب‌شده."
+msgstr ""
+
+#: includes/class-ntv-settings.php:540
+msgid "غیرفعال‌سازی هایلایت آبی لمس و انتخاب متن نوبار (user-select: none)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:541
+msgid "متون مقالات، پست‌ها و اینپوت‌ها کماکان قابل کپی خواهند بود."
+msgstr ""
+
+#: includes/class-ntv-settings.php:547
+msgid "انیمیشن‌های جابجایی بین صفحات (View Transitions API)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:548
+msgid "انتقال نرم و سینمایی هنگام جابجایی بین صفحات در مرورگرهای سازگار."
+msgstr ""
+
+#: includes/class-ntv-settings.php:555
+msgid "قوانین هدف‌گذاری و استثنائات صفحات"
+msgstr ""
+
+#: includes/class-ntv-settings.php:559
+msgid "مخفی‌سازی نوبار در صفحه سبد خرید ووکامرس"
+msgstr ""
+
+#: includes/class-ntv-settings.php:563
+msgid "مخفی‌سازی نوبار در صفحه تسویه‌حساب (Checkout)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:571
+msgid "هسته Progressive Web App (PWA)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:574
+msgid "فعال‌سازی سرویس‌ورکر و مانیفست وب‌اپلیکیشن (PWA)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:579
+msgid "نام کامل اپلیکیشن:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:583
+msgid "نام کوتاه هوم‌اسکرین (iOS & Android):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:588
+msgid "توضیحات کوتاه اپلیکیشن:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:594
+msgid "رنگ تم نوار وضعیت (Theme Color):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:598
+msgid "رنگ پس‌زمینه اسپلش اسکرین:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:604
+msgid "آیکون با کیفیت اپلیکیشن (512x512 PNG):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:619
+msgid "انتخاب از کتابخانه رسانه"
+msgstr ""
+
+#: includes/class-ntv-settings.php:620
+msgid "هنگام ذخیره، نسخه‌های 192x192 و 180x180 (مخصوص iOS Touch Icon) به طور خودکار ساخته می‌شوند."
+msgstr ""
+
+#: includes/class-ntv-settings.php:627
+msgid "بنر هوشمند نصب اپلیکیشن (Smart Install Prompt)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:630
+msgid "نمایش پیام هوشمند دعوت به نصب در مرورگرها و راهنمای تصویری iOS Safari"
+msgstr ""
+
+#: includes/class-ntv-settings.php:635
+msgid "تاخیر در نمایش (ثانیه):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:639
+msgid "حداقل بازدید از صفحات:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:643
+msgid "توقف نمایش پس از رد کردن (روز):"
+msgstr ""
+
+#: includes/class-ntv-settings.php:651
+msgid "مدیریت و پاک‌سازی کش PWA"
+msgstr ""
+
+#: includes/class-ntv-settings.php:652
+msgid "در صورتی که تغییری در صفحات یا کدهای سایت ایجاد کرده‌اید، با این دکمه کش سرویس‌ورکر کلاینت‌ها را فورس‌آپدیت کنید:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:654
+msgid "پاک‌سازی فوری کش PWA"
+msgstr ""
+
+#: includes/class-ntv-settings.php:656
+msgid "نسخه کش فعلی:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:660
+msgid "درون‌ریزی و برون‌بری تنظیمات (JSON)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:663
+msgid "برون‌بری تنظیمات"
+msgstr ""
+
+#: includes/class-ntv-settings.php:664
+msgid "دانلود یک نسخه پشتیبان کامل از تمامی آیتم‌ها و استایل‌ها به صورت فایل JSON."
+msgstr ""
+
+#: includes/class-ntv-settings.php:666
+msgid "دانلود فایل تنظیمات"
+msgstr ""
+
+#: includes/class-ntv-settings.php:670
+msgid "درون‌ریزی تنظیمات"
+msgstr ""
+
+#: includes/class-ntv-settings.php:671
+msgid "بارگذاری فایل تنظیمات JSON از پیش ذخیره شده."
+msgstr ""
+
+#: includes/class-ntv-settings.php:676
+msgid "درون‌ریزی فایل"
+msgstr ""
+
+#: includes/class-ntv-settings.php:683
+msgid "بازنشانی به حالت کارخانه"
+msgstr ""
+
+#: includes/class-ntv-settings.php:684
+msgid "بازگردانی تمامی رنگ‌ها، آیتم‌ها و تنظیمات به مقادیر اولیه افزونه:"
+msgstr ""
+
+#: includes/class-ntv-settings.php:686
+msgid "بازنشانی کلیه تنظیمات به حالت اولیه"
+msgstr ""
+
+#: includes/class-ntv-settings.php:737
+msgid "پیش‌نمایش زنده تعاملی (برای تست انیمیشن روی تب‌ها کلیک کنید)"
+msgstr ""
+
+#: includes/class-ntv-settings.php:746
+msgid "انتخاب آیکون وکتور Lucide"
+msgstr ""
+
+#: includes/class-ntv-settings.php:750
+msgid "جستجوی آیکون..."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:127
+msgid "وضعیت گواهی امنیتی HTTPS"
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:128
+msgid "گواهی امنیتی فعال است."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:128
+msgid "گواهی SSL فعال نیست! Service Worker برای فعال‌سازی PWA الزماً به HTTPS نیاز دارد."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:136
+msgid "پشتیبانی از پردازش تصویر (GD / Imagick)"
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:137
+msgid "محیط هاست قادر به تولید خودکار آیکون‌های PWA است."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:137
+msgid "کتابخانه GD یا Imagick روی سرور یافت نشد. تولید خودکار اندازه آیکون‌ها ممکن است با خطا مواجه شود."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:145
+msgid "نقاط انتهایی PWA (Endpoints)"
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:146
+msgid "آدرس مانیفست و سرویس‌ورکر به درستی تعریف شده‌اند."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:175
+msgid "تداخل افزونه‌های PWA موازی"
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:181
+msgid "پیشنهاد می‌شود برای جلوگیری از اختلال در کش، سایر افزونه‌های PWA را غیرفعال کنید."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:185
+msgid "بررسی تداخل افزونه‌ها"
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:186
+msgid "هیچ افزونه PWA موازی فعالی شناسایی نشد."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:194
+msgid "یکپارچگی ووکامرس"
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:195
+msgid "ووکامرس فعال است و شمارنده سبد خرید و قوانین انحصاری فعال هستند."
+msgstr ""
+
+#: includes/class-ntv-diagnostics.php:195
+msgid "ووکامرس غیرفعال است (اختیاری)."
+msgstr ""
+
+#: includes/class-ntv-pwa.php:304
+#: includes/class-ntv-pwa.php:368
+msgid "ارتباط با اینترنت برقرار نیست"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:307
+msgid "تلاش مجدد"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:470
+msgid "نسخه جدید آماده است"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:473
+msgid "بروزرسانی"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:490
+msgid "نصب اپلیکیشن"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:491
+msgid "بعداً"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:511
+msgid "نصب وب‌اپلیکیشن در آیفون"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:512
+msgid "برای تجربه سریع‌تر و دسترسی مستقیم:"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:517
+msgid "در نوار پایین سافاری، دکمه اشتراک‌گذاری"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:517
+msgid "را لمس کنید."
+msgstr ""
+
+#: includes/class-ntv-pwa.php:522
+msgid "منو را به پایین بکشید و گزینه"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:522
+msgid "افزودن به صفحه اصلی"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:522
+msgid "را انتخاب کنید."
+msgstr ""
+
+#: includes/class-ntv-pwa.php:527
+msgid "در گوشه بالا، روی دکمه"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:527
+msgid "Add"
+msgstr ""
+
+#: includes/class-ntv-pwa.php:527
+msgid "ضربه بزنید."
+msgstr ""
+
+#: includes/class-ntv-pwa.php:530
+msgid "متوجه شدم"
+msgstr ""
