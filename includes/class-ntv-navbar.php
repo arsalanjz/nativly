@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  * Class NTV_Navbar
  *
  * Handles frontend rendering, dynamic inline styling, smart active tab detection,
- * and visibility rules for the expanding glassmorphic navigation bar.
+ * script loader optimization bypassing, and visibility rules for the expanding glassmorphic navigation bar.
  */
 class NTV_Navbar {
 
@@ -50,6 +50,26 @@ class NTV_Navbar {
 	private function init_hooks() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'wp_footer', array( $this, 'render_navbar' ), 90 );
+		add_filter( 'script_loader_tag', array( $this, 'add_no_optimize_attributes' ), 10, 2 );
+	}
+
+	/**
+	 * Mark Nativly frontend scripts with cache-plugin bypass attributes.
+	 *
+	 * Prevents delay/defer optimization by WP Rocket, LiteSpeed, Autoptimize, etc.,
+	 * ensuring the navbar renders instantly without popping in seconds later.
+	 *
+	 * @param string $tag    HTML script tag.
+	 * @param string $handle Script handle.
+	 * @return string Modified script tag.
+	 */
+	public function add_no_optimize_attributes( $tag, $handle ) {
+		if ( in_array( $handle, array( 'ntv-frontend', 'ntv-install-prompt' ), true ) ) {
+			if ( false === strpos( $tag, 'data-no-optimize' ) ) {
+				$tag = str_replace( '<script ', '<script data-no-optimize="1" data-no-defer="1" data-cfasync="false" ', $tag );
+			}
+		}
+		return $tag;
 	}
 
 	/**
@@ -113,6 +133,38 @@ class NTV_Navbar {
 		}
 		if ( function_exists( 'is_checkout' ) && ! empty( $settings['exclude_on_checkout'] ) && is_checkout() ) {
 			return false;
+		}
+
+		// 5. Custom URL / Path Exclusions (supports wildcards, e.g. /landing-*, /campaign, https://example.com/promo/).
+		if ( ! empty( $settings['excluded_urls'] ) ) {
+			$raw_patterns = explode( "\n", str_replace( "\r", '', (string) $settings['excluded_urls'] ) );
+			$current_url  = self::get_current_request_url();
+			$current_path = (string) wp_parse_url( $current_url, PHP_URL_PATH );
+			$current_path = '/' . ltrim( $current_path, '/' );
+
+			foreach ( $raw_patterns as $pattern ) {
+				$pattern = trim( $pattern );
+				if ( empty( $pattern ) ) {
+					continue;
+				}
+
+				// If pattern is a full URL.
+				if ( 0 === strpos( $pattern, 'http://' ) || 0 === strpos( $pattern, 'https://' ) ) {
+					if ( fnmatch( $pattern, $current_url, FNM_CASEFOLD ) || fnmatch( trailingslashit( $pattern ), trailingslashit( $current_url ), FNM_CASEFOLD ) ) {
+						return false;
+					}
+				} else {
+					// Relative path pattern.
+					$normalized_pattern = '/' . ltrim( $pattern, '/' );
+					if ( fnmatch( $normalized_pattern, $current_path, FNM_CASEFOLD ) || fnmatch( trailingslashit( $normalized_pattern ), trailingslashit( $current_path ), FNM_CASEFOLD ) ) {
+						return false;
+					}
+					// Also test wildcard matching on raw pattern.
+					if ( fnmatch( $pattern, $current_path, FNM_CASEFOLD ) ) {
+						return false;
+					}
+				}
+			}
 		}
 
 		/**
@@ -187,8 +239,9 @@ class NTV_Navbar {
 		$border_radius       = isset( $settings['border_radius'] ) ? (int) $settings['border_radius'] : 999;
 		$bottom_offset       = isset( $settings['mobile_bottom_offset'] ) ? (int) $settings['mobile_bottom_offset'] : 16;
 		$body_bottom_padding = isset( $settings['body_bottom_padding'] ) ? (int) $settings['body_bottom_padding'] : 85;
+		$custom_width        = ! empty( $settings['navbar_custom_width'] ) ? $settings['navbar_custom_width'] : '90%';
 
-		$css = ":root {\n";
+		$css  = ":root {\n";
 		$css .= "\t--ntv-active-bg: " . esc_attr( $active_pill_bg ) . ";\n";
 		$css .= "\t--ntv-active-text: " . esc_attr( $active_text_color ) . ";\n";
 		$css .= "\t--ntv-inactive-color: " . esc_attr( $inactive_icon_color ) . ";\n";
@@ -198,6 +251,7 @@ class NTV_Navbar {
 		$css .= "\t--ntv-border-radius: " . esc_attr( (string) $border_radius ) . "px;\n";
 		$css .= "\t--ntv-bottom-offset: " . esc_attr( (string) $bottom_offset ) . "px;\n";
 		$css .= "\t--ntv-body-padding: " . esc_attr( (string) $body_bottom_padding ) . "px;\n";
+		$css .= "\t--ntv-custom-width: " . esc_attr( $custom_width ) . ";\n";
 		$css .= "}\n";
 
 		// View transitions feature.
@@ -225,7 +279,6 @@ class NTV_Navbar {
 			$wp_items = wp_get_nav_menu_items( (int) $settings['wp_nav_menu_id'] );
 			if ( is_array( $wp_items ) ) {
 				foreach ( $wp_items as $wp_item ) {
-					// Read custom icon attributes if stored in meta or fallback to default.
 					$icon_slug = get_post_meta( $wp_item->ID, '_ntv_icon', true );
 					if ( empty( $icon_slug ) ) {
 						$icon_slug = 'compass';
@@ -252,7 +305,6 @@ class NTV_Navbar {
 		$display_items = array();
 
 		foreach ( $raw_items as $item ) {
-			// Item-level authentication & role checks.
 			$visibility = isset( $item['visibility'] ) ? $item['visibility'] : 'all';
 
 			if ( 'logged_in' === $visibility && ! $is_logged_in ) {
@@ -397,6 +449,7 @@ class NTV_Navbar {
 
 		$settings         = NTV_Core::get_settings();
 		$desktop_position = isset( $settings['desktop_position'] ) ? $settings['desktop_position'] : 'hidden';
+		$width_mode       = isset( $settings['navbar_width_mode'] ) ? $settings['navbar_width_mode'] : 'auto';
 		$is_rtl           = is_rtl();
 		$dir_attr         = $is_rtl ? 'rtl' : 'ltr';
 
@@ -421,6 +474,7 @@ class NTV_Navbar {
 		$wrapper_classes = array(
 			'ntv-glass-nav-container',
 			'ntv-desktop-' . sanitize_html_class( $desktop_position ),
+			'ntv-width-' . sanitize_html_class( $width_mode ),
 		);
 
 		if ( ! empty( $settings['enable_overscroll_none'] ) ) {
@@ -431,14 +485,63 @@ class NTV_Navbar {
 			$wrapper_classes[] = 'ntv-no-select';
 		}
 
+		// Bubble Menu ("More" hamburger submenu).
+		$enable_more_menu = ! empty( $settings['enable_more_menu'] );
+		$more_title       = ! empty( $settings['more_menu_title'] ) ? $settings['more_menu_title'] : __( 'More', 'nativly' );
+		$more_icon        = ! empty( $settings['more_menu_icon'] ) ? $settings['more_menu_icon'] : 'grid';
+		$more_items_raw   = ! empty( $settings['more_menu_items'] ) && is_array( $settings['more_menu_items'] ) ? $settings['more_menu_items'] : array();
+
+		$is_logged_in = is_user_logged_in();
+		$more_items   = array();
+		if ( $enable_more_menu ) {
+			foreach ( $more_items_raw as $b_item ) {
+				$b_visibility = isset( $b_item['visibility'] ) ? $b_item['visibility'] : 'all';
+				if ( 'logged_in' === $b_visibility && ! $is_logged_in ) {
+					continue;
+				}
+				if ( 'guests' === $b_visibility && $is_logged_in ) {
+					continue;
+				}
+				$more_items[] = $b_item;
+			}
+		}
 		?>
 		<!-- Nativly Expanding Glassmorphic Navbar -->
 		<div id="ntv-navbar-root" class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" dir="<?php echo esc_attr( $dir_attr ); ?>">
+			<?php if ( $enable_more_menu && ! empty( $more_items ) ) : ?>
+				<!-- Liquid Glass Bubble Popover Submenu -->
+				<div id="ntv-glass-bubble-popover" class="ntv-bubble-popover" role="dialog" aria-modal="false" aria-hidden="true" style="display:none;">
+					<div class="ntv-bubble-glass-card">
+						<div class="ntv-bubble-grid">
+							<?php
+							foreach ( $more_items as $b_idx => $b_item ) :
+								$b_title = ! empty( $b_item['title'] ) ? $b_item['title'] : '';
+								$b_url   = ! empty( $b_item['url'] ) ? $b_item['url'] : '#';
+								$b_icon  = ! empty( $b_item['icon'] ) ? $b_item['icon'] : 'compass';
+								$b_svg   = ( 'custom' === ( $b_item['icon_type'] ?? '' ) && ! empty( $b_item['custom_svg'] ) )
+									? NTV_Icons::get_icon_svg( $b_item['custom_svg'] )
+									: NTV_Icons::get_icon_svg( $b_icon );
+								if ( empty( $b_svg ) ) {
+									$b_svg = NTV_Icons::get_icon_svg( 'compass' );
+								}
+								?>
+								<a href="<?php echo esc_url( $b_url ); ?>" class="ntv-bubble-item" title="<?php echo esc_attr( $b_title ); ?>">
+									<span class="ntv-bubble-item-icon" aria-hidden="true">
+										<?php echo $b_svg; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+									</span>
+									<span class="ntv-bubble-item-title"><?php echo esc_html( $b_title ); ?></span>
+								</a>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				</div>
+			<?php endif; ?>
+
 			<nav class="ntv-glass-nav" aria-label="<?php esc_attr_e( 'Main Mobile Navigation', 'nativly' ); ?>" role="navigation">
 				<div class="ntv-nav-list" role="menubar">
 					<?php
 					foreach ( $items as $idx => $item ) :
-						$is_active   = ( $idx === $active_index );
+						$is_active    = ( $idx === $active_index );
 						$item_classes = array( 'ntv-nav-item' );
 						if ( $is_active ) {
 							$item_classes[] = 'is-active';
@@ -458,7 +561,6 @@ class NTV_Navbar {
 						}
 
 						if ( empty( $icon_markup ) ) {
-							// Fallback home icon.
 							$icon_markup = NTV_Icons::get_icon_svg( 'home' );
 						}
 						?>
@@ -485,6 +587,21 @@ class NTV_Navbar {
 							<span class="ntv-label"><?php echo esc_html( $item_title ); ?></span>
 						</a>
 					<?php endforeach; ?>
+
+					<?php if ( $enable_more_menu && ! empty( $more_items ) ) : ?>
+						<button type="button"
+						        class="ntv-nav-item ntv-more-trigger"
+						        id="ntv-more-trigger"
+						        aria-haspopup="true"
+						        aria-expanded="false"
+						        aria-controls="ntv-glass-bubble-popover"
+						        title="<?php echo esc_attr( $more_title ); ?>">
+							<span class="ntv-icon-wrap" aria-hidden="true">
+								<?php echo NTV_Icons::get_icon_svg( $more_icon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							</span>
+							<span class="ntv-label"><?php echo esc_html( $more_title ); ?></span>
+						</button>
+					<?php endif; ?>
 				</div>
 			</nav>
 		</div>

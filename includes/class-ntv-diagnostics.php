@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
  * Class NTV_Diagnostics
  *
  * Handles PWA health checks, server environment checks, conflicting plugin detection,
- * and automatic cache exclusion filters for WP Rocket, LiteSpeed, Autoptimize, and W3TC.
+ * beginner-friendly Persian explanations, and automatic cache exclusion filters
+ * for WP Rocket, LiteSpeed, Autoptimize, and W3TC.
  */
 class NTV_Diagnostics {
 
@@ -45,7 +46,7 @@ class NTV_Diagnostics {
 	/**
 	 * Hook automatic exclusions into top WordPress caching and optimization plugins.
 	 *
-	 * Ensures /ntv-sw.js and /ntv-manifest.json are never cached, minified, or deferred.
+	 * Ensures /ntv-sw.js, /ntv-manifest.json, and ntv-frontend assets are never cached, minified, or deferred.
 	 *
 	 * @return void
 	 */
@@ -53,6 +54,7 @@ class NTV_Diagnostics {
 		// 1. WP Rocket exclusions.
 		add_filter( 'rocket_exclude_js', array( $this, 'exclude_from_js_minify' ) );
 		add_filter( 'rocket_cache_reject_uri', array( $this, 'exclude_from_page_cache' ) );
+		add_filter( 'rocket_delay_js_exclusions', array( $this, 'exclude_from_delay_js' ) );
 
 		// 2. LiteSpeed Cache exclusions.
 		add_filter( 'litespeed_optimize_js_excludes', array( $this, 'exclude_from_js_minify' ) );
@@ -77,6 +79,23 @@ class NTV_Diagnostics {
 			return array_unique( array_merge( $excludes, $items ) );
 		}
 		return $excludes;
+	}
+
+	/**
+	 * Exclude Nativly scripts from WP Rocket Delay JavaScript execution.
+	 *
+	 * Ensures the bottom navbar and interactive gestures are initialized instantly without
+	 * waiting for user scroll/interaction.
+	 *
+	 * @param array $exclusions Array of delay JS exclusions.
+	 * @return array Filtered exclusions.
+	 */
+	public function exclude_from_delay_js( $exclusions ) {
+		if ( ! is_array( $exclusions ) ) {
+			$exclusions = array();
+		}
+		$items = array( 'ntv-frontend', 'ntv-install-prompt', 'ntvFrontendData' );
+		return array_unique( array_merge( $exclusions, $items ) );
 	}
 
 	/**
@@ -124,7 +143,7 @@ class NTV_Diagnostics {
 	 * Check if W3TC should minify.
 	 *
 	 * @param bool   $enable Minify status.
-	 * @param string $file File name.
+	 * @param string $file   File name.
 	 * @return bool
 	 */
 	public function w3tc_maybe_disable_minify( $enable, $file = '' ) {
@@ -135,39 +154,42 @@ class NTV_Diagnostics {
 	}
 
 	/**
-	 * Run all diagnostic checks and return structured test reports.
+	 * Run all diagnostic checks and return structured test reports with Persian explanations.
 	 *
-	 * @return array<string,array{status: string, title: string, message: string, detail: string}>
+	 * @return array<string,array{status: string, title: string, message: string, detail: string, help: string}>
 	 */
 	public static function run_diagnostics() {
 		$checks = array();
 
 		// Check 1: HTTPS / SSL.
-		$is_ssl = is_ssl();
+		$is_ssl        = is_ssl();
 		$checks['ssl'] = array(
 			'status'  => $is_ssl ? 'success' : 'error',
 			'title'   => __( 'وضعیت گواهی امنیتی HTTPS', 'nativly' ),
-			'message' => $is_ssl ? __( 'گواهی امنیتی فعال است.', 'nativly' ) : __( 'گواهی SSL فعال نیست! Service Worker برای فعال‌سازی PWA الزماً به HTTPS نیاز دارد.', 'nativly' ),
+			'message' => $is_ssl ? __( 'گواهی امنیتی فعال است.', 'nativly' ) : __( 'گواهی SSL فعال نیست! Service Worker برای فعال‌سازی PWA الزاماً به HTTPS نیاز دارد.', 'nativly' ),
 			'detail'  => $is_ssl ? 'HTTPS Enabled' : 'HTTP Only (Service Worker will fail on client devices)',
+			'help'    => __( 'گواهی SSL اتصال وب‌سایت شما را با پروتکل امن HTTPS رمزنگاری می‌کند. استانداردهای مرورگرهای مدرن (گوگل کروم و سافاری) ثبت Service Worker و عملکرد وب‌اپلیکیشن (PWA) را در بستر غیرامن HTTP مسدود می‌کنند. اگر علامت قرمز دیدید، گواهی امنیتی رایگان Let\'s Encrypt را از کنترل‌پنل هاست خود فعال نمایید.', 'nativly' ),
 		);
 
 		// Check 2: GD or Imagick library support for PNG.
-		$has_png_support = wp_image_editor_supports( array( 'mime_type' => 'image/png' ) );
+		$has_png_support        = wp_image_editor_supports( array( 'mime_type' => 'image/png' ) );
 		$checks['image_editor'] = array(
 			'status'  => $has_png_support ? 'success' : 'warning',
 			'title'   => __( 'پشتیبانی از پردازش تصویر (GD / Imagick)', 'nativly' ),
 			'message' => $has_png_support ? __( 'محیط هاست قادر به تولید خودکار آیکون‌های PWA است.', 'nativly' ) : __( 'کتابخانه GD یا Imagick روی سرور یافت نشد. تولید خودکار اندازه آیکون‌ها ممکن است با خطا مواجه شود.', 'nativly' ),
 			'detail'  => $has_png_support ? 'PHP Image Editor Ready' : 'GD / Imagick Missing for image/png',
+			'help'    => __( 'کتابخانه‌های گرافیکی PHP مانند GD یا ImageMagick وظیفه فشرده‌سازی و تغییر سایز آیکون اپلیکیشن به ابعاد ۵۱۲×۵۱۲ پیکسل را بر عهده دارند. در صورتی که هاست شما فاقد این اکستنشن باشد، کافیست از پشتیبانی هاست خود بخواهید اکستنشن php-gd یا php-imagick را برای نسخه PHP شما فعال کند.', 'nativly' ),
 		);
 
 		// Check 3: Manifest & Service Worker Endpoints.
-		$manifest_url = home_url( '/ntv-manifest.json' );
-		$sw_url       = home_url( '/ntv-sw.js' );
+		$manifest_url        = home_url( '/ntv-manifest.json' );
+		$sw_url              = home_url( '/ntv-sw.js' );
 		$checks['endpoints'] = array(
 			'status'  => 'info',
 			'title'   => __( 'نقاط انتهایی PWA (Endpoints)', 'nativly' ),
 			'message' => __( 'آدرس مانیفست و سرویس‌ورکر به درستی تعریف شده‌اند.', 'nativly' ),
 			'detail'  => sprintf( '<a href="%s" target="_blank" rel="noopener">Manifest.json</a> | <a href="%s" target="_blank" rel="noopener">Service-Worker.js</a>', esc_url( $manifest_url ), esc_url( $sw_url ) ),
+			'help'    => __( 'فایل‌های manifest.json و ntv-sw.js هسته اصلی اپلیکیشن تحت وب شما هستند. فایل مانیفست مشخصات ظاهری، رنگ و نام اپلیکیشن را به سیستم‌عامل موبایل معرفی می‌کند و سرویس‌ورکر فایل‌ها را در حافظه گوشی ذخیره کرده و کارکرد آفلاین را ممکن می‌سازد. با کلیک روی هر لینک، مطمئن شوید محتوای فایل‌ها بدون خطای ۴۰۴ باز می‌شود.', 'nativly' ),
 		);
 
 		// Check 4: Conflicting PWA Plugins.
@@ -201,6 +223,7 @@ class NTV_Diagnostics {
 					implode( '، ', array_map( 'esc_html', $active_conflicts ) )
 				),
 				'detail'  => __( 'پیشنهاد می‌شود برای جلوگیری از اختلال در کش، سایر افزونه‌های PWA را غیرفعال کنید.', 'nativly' ),
+				'help'    => __( 'فعال بودن چند افزونه PWA به طور همزمان باعث ثبت چند Service Worker موازی در مرورگر مخاطب می‌شود. این مسئله به رفتارهای غیرمنتظره، کش شدن فایل‌های اشتباه و عدم نمایش نوبار منجر خواهد شد. پیشنهاد می‌کنیم فقط از قابلیت‌های نیتیولی استفاده کنید.', 'nativly' ),
 			);
 		} else {
 			$checks['conflicts'] = array(
@@ -208,16 +231,27 @@ class NTV_Diagnostics {
 				'title'   => __( 'بررسی تداخل افزونه‌ها', 'nativly' ),
 				'message' => __( 'هیچ افزونه PWA موازی فعالی شناسایی نشد.', 'nativly' ),
 				'detail'  => 'No Conflicting PWA Plugins Detected',
+				'help'    => __( 'هیچ افزونه متداخلی در سایت شما فعال نیست و نیتیولی به صورت انحصاری مدیریت تجربه بومی موبایل و PWA را در دست دارد.', 'nativly' ),
 			);
 		}
 
 		// Check 5: Active WooCommerce.
-		$has_wc = class_exists( 'WooCommerce' );
+		$has_wc                = class_exists( 'WooCommerce' );
 		$checks['woocommerce'] = array(
 			'status'  => 'info',
 			'title'   => __( 'یکپارچگی ووکامرس', 'nativly' ),
 			'message' => $has_wc ? __( 'ووکامرس فعال است و شمارنده سبد خرید و قوانین انحصاری فعال هستند.', 'nativly' ) : __( 'ووکامرس غیرفعال است (اختیاری).', 'nativly' ),
 			'detail'  => $has_wc ? 'WooCommerce Detected & Integrated' : 'WooCommerce Not Installed',
+			'help'    => __( 'نیتیولی به طور هوشمند سبد خرید، صفحه حساب کاربری و صفحات تسویه‌حساب ووکامرس را تشخیص داده و نشان شمارنده سبد خرید را در لحظه و بدون نیاز به بارگذاری مجدد صفحه به‌روزرسانی می‌کند.', 'nativly' ),
+		);
+
+		// Check 6: Cache Engine Compatibility.
+		$checks['cache_exclusions'] = array(
+			'status'  => 'success',
+			'title'   => __( 'سازگاری با افزونه‌های کش و بهینه‌سازی', 'nativly' ),
+			'message' => __( 'فیلترهای استثنای خودکار برای WP Rocket، LiteSpeed Cache، Autoptimize و W3TC فعال هستند.', 'nativly' ),
+			'detail'  => 'Zero-Delay Optimization Bypass Active',
+			'help'    => __( 'اسکریپت‌ها و فایل‌های ضروری نیتیولی به صورت خودکار از قابلیت‌های تاخیر اجرای جاوااسکریپت (Delay JS) و استخراج استایل بحرانی (Critical CSS) مستثنی شده‌اند تا نوبار موبایل با سرعت و بدون تاخیر چند ثانیه‌ای بلافاصله در دسترس کاربر قرار گیرد.', 'nativly' ),
 		);
 
 		return $checks;
@@ -250,10 +284,21 @@ class NTV_Diagnostics {
 									<span class="dashicons dashicons-info"></span>
 								<?php endif; ?>
 							</div>
-							<div class="ntv-check-body">
-								<h4 class="ntv-check-title"><?php echo esc_html( $check['title'] ); ?></h4>
+							<div class="ntv-check-content">
+								<h4 class="ntv-check-title">
+									<?php echo esc_html( $check['title'] ); ?>
+									<?php if ( ! empty( $check['help'] ) ) : ?>
+										<button type="button" class="ntv-help-trigger" aria-label="<?php esc_attr_e( 'راهنمای تشریحی', 'nativly' ); ?>" title="<?php esc_attr_e( 'مشاهده راهنما و راهکار', 'nativly' ); ?>">?</button>
+									<?php endif; ?>
+								</h4>
 								<p class="ntv-check-msg"><?php echo esc_html( $check['message'] ); ?></p>
 								<div class="ntv-check-detail"><?php echo wp_kses_post( $check['detail'] ); ?></div>
+								<?php if ( ! empty( $check['help'] ) ) : ?>
+									<div class="ntv-help-box" style="display:none;">
+										<strong><?php esc_html_e( 'راهنمایی و راهکار تکمیلی:', 'nativly' ); ?></strong>
+										<p><?php echo esc_html( $check['help'] ); ?></p>
+									</div>
+								<?php endif; ?>
 							</div>
 						</div>
 					<?php endforeach; ?>
@@ -263,10 +308,10 @@ class NTV_Diagnostics {
 			<div class="ntv-card ntv-mt-4">
 				<h3 class="ntv-card-title"><?php esc_html_e( 'تنظیمات پیشنهادی Cloudflare و CDN', 'nativly' ); ?></h3>
 				<p class="ntv-card-subtitle"><?php esc_html_e( 'برای جلوگیری از کش شدن سرویس‌ورکر و مانیفست توسط شبکه توزیع محتوا (CDN)، قانون زیر را در Cloudflare Page Rules یا Cache Rules اضافه کنید:', 'nativly' ); ?></p>
-				
+
 				<div class="ntv-code-block">
 					<code>
-						URL: *<?php echo esc_html( wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>/ntv-sw.js<br>
+						URL: *<?php echo esc_html( (string) wp_parse_url( home_url(), PHP_URL_HOST ) ); ?>/ntv-sw.js<br>
 						Cache Level: Bypass<br>
 						Edge Cache TTL: Bypass
 					</code>

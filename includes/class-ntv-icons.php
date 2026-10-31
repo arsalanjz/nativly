@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class NTV_Icons
  *
- * Provides a curated static catalog of 25 Lucide SVG icons and
+ * Provides a curated static catalog of 25+ Lucide SVG icons and
  * a hardened DOMDocument-based SVG sanitizer.
  */
 class NTV_Icons {
@@ -24,7 +24,7 @@ class NTV_Icons {
 	private static $catalog = null;
 
 	/**
-	 * Retrieve full catalog of 25 clean, MIT-licensed Lucide SVG icons.
+	 * Retrieve full catalog of clean, MIT-licensed Lucide SVG icons.
 	 *
 	 * @return array<string, array{name: string, path: string}>
 	 */
@@ -134,9 +134,34 @@ class NTV_Icons {
 				'name' => __( 'Login / Sign In', 'nativly' ),
 				'path' => '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" x2="3" y1="12" y2="12"></line>',
 			),
+			'menu'           => array(
+				'name' => __( 'Menu / Hamburger', 'nativly' ),
+				'path' => '<line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line>',
+			),
+			'more-horizontal' => array(
+				'name' => __( 'More Horizontal', 'nativly' ),
+				'path' => '<circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>',
+			),
 		);
 
 		return self::$catalog;
+	}
+
+	/**
+	 * Retrieve full catalog with human-readable labels and pre-rendered SVG markup.
+	 *
+	 * @return array<string, array{label: string, svg: string}>
+	 */
+	public static function get_all_icons() {
+		$catalog = self::get_catalog();
+		$icons   = array();
+		foreach ( $catalog as $key => $item ) {
+			$icons[ $key ] = array(
+				'label' => $item['name'],
+				'svg'   => self::get_icon_svg( $key ),
+			);
+		}
+		return $icons;
 	}
 
 	/**
@@ -168,17 +193,17 @@ class NTV_Icons {
 		// Check if it is a catalog icon.
 		if ( isset( $catalog[ $key_or_custom_svg ] ) ) {
 			$base_attrs = array(
-				'xmlns'       => 'http://www.w3.org/2000/svg',
-				'viewBox'     => '0 0 24 24',
-				'width'       => '24',
-				'height'      => '24',
-				'fill'        => 'none',
-				'stroke'      => 'currentColor',
-				'stroke-width' => '2',
-				'stroke-linecap' => 'round',
+				'xmlns'           => 'http://www.w3.org/2000/svg',
+				'viewBox'         => '0 0 24 24',
+				'width'           => '24',
+				'height'          => '24',
+				'fill'            => 'none',
+				'stroke'          => 'currentColor',
+				'stroke-width'    => '2',
+				'stroke-linecap'  => 'round',
 				'stroke-linejoin' => 'round',
-				'class'       => 'ntv-icon-svg ntv-icon-' . sanitize_html_class( $key_or_custom_svg ),
-				'aria-hidden' => 'true',
+				'class'           => 'ntv-icon-svg ntv-icon-' . sanitize_html_class( $key_or_custom_svg ),
+				'aria-hidden'     => 'true',
 			);
 
 			if ( ! empty( $custom_attrs ) && is_array( $custom_attrs ) ) {

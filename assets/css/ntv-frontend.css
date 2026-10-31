@@ -16,6 +16,7 @@
   --ntv-body-padding: 85px;
   --ntv-badge-bg: #FF3B30;
   --ntv-badge-text: #FFFFFF;
+  --ntv-custom-width: 90%;
 }
 
 /* ==========================================================================
@@ -63,7 +64,7 @@
 }
 
 /* ==========================================================================
-   Navbar Container & Glassmorphic Shell
+   Navbar Container & Glassmorphic Shell (Instant Visibility)
    ========================================================================== */
 .ntv-glass-nav-container {
   position: fixed;
@@ -76,6 +77,8 @@
   width: 100%;
   left: 0;
   right: 0;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Mobile & Tablet Positioning (Floating Bottom) */
@@ -118,10 +121,35 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
   max-width: 100%;
   box-sizing: border-box;
-  /* Resilient solid backdrop fallback upgraded with backdrop-filter */
   backdrop-filter: blur(var(--ntv-blur)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--ntv-blur)) saturate(180%);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, width 0.25s ease;
+}
+
+/* Navbar Width Modes */
+.ntv-glass-nav-container.ntv-width-auto .ntv-glass-nav {
+  width: auto;
+}
+
+.ntv-glass-nav-container.ntv-width-full {
+  padding-inline: 16px;
+}
+.ntv-glass-nav-container.ntv-width-full .ntv-glass-nav {
+  width: calc(100% - 32px);
+  max-width: 600px;
+}
+.ntv-glass-nav-container.ntv-width-full .ntv-nav-list {
+  width: 100%;
+  justify-content: space-around;
+}
+
+.ntv-glass-nav-container.ntv-width-custom .ntv-glass-nav {
+  width: var(--ntv-custom-width, 90%);
+  max-width: 600px;
+}
+.ntv-glass-nav-container.ntv-width-custom .ntv-nav-list {
+  width: 100%;
+  justify-content: space-around;
 }
 
 /* Menu list flex container */
@@ -192,7 +220,7 @@
   color: inherit;
 }
 
-.ntv-icon-svg {
+.ntv-icon-wrap svg {
   width: 22px;
   height: 22px;
   display: block;
@@ -202,7 +230,7 @@
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ntv-nav-item.is-active .ntv-icon-svg {
+.ntv-nav-item.is-active .ntv-icon-wrap svg {
   transform: scale(1.05);
 }
 
@@ -234,6 +262,108 @@
   opacity: 1;
   margin-inline-start: 8px;
   transform: translateX(0);
+}
+
+/* More trigger button style */
+.ntv-more-trigger {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   Liquid Glass Bubble Popover Submenu ("More" item)
+   ========================================================================== */
+.ntv-bubble-popover {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  margin: 0 auto;
+  z-index: 100000;
+  pointer-events: auto;
+  animation: ntvBubblePop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: bottom center;
+}
+
+@keyframes ntvBubblePop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ntv-bubble-glass-card {
+  background: var(--ntv-glass-bg, rgba(18, 18, 24, 0.94));
+  backdrop-filter: blur(var(--ntv-blur, 20px)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--ntv-blur, 20px)) saturate(180%);
+  border: 1px solid var(--ntv-glass-border, rgba(255, 255, 255, 0.15));
+  border-radius: 20px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.ntv-bubble-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.ntv-bubble-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border-radius: 12px;
+  text-decoration: none !important;
+  color: var(--ntv-inactive-color, rgba(255, 255, 255, 0.75));
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ntv-bubble-item:hover,
+.ntv-bubble-item:focus-visible {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.ntv-bubble-item:active {
+  transform: scale(0.94);
+}
+
+.ntv-bubble-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.ntv-bubble-item-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.ntv-bubble-item-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ==========================================================================
@@ -561,8 +691,10 @@
 @media (prefers-reduced-motion: reduce) {
   .ntv-glass-nav,
   .ntv-nav-item,
-  .ntv-icon-svg,
+  .ntv-icon-wrap svg,
   .ntv-label,
+  .ntv-bubble-popover,
+  .ntv-bubble-item,
   .ntv-glass-toast,
   .ntv-glass-install-card,
   .ntv-glass-ios-modal {
@@ -573,6 +705,7 @@
 
 @media (prefers-reduced-transparency: reduce) {
   .ntv-glass-nav,
+  .ntv-bubble-glass-card,
   .ntv-glass-toast,
   .ntv-glass-install-card,
   .ntv-glass-ios-modal {

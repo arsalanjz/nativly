@@ -168,6 +168,12 @@ class NTV_Activator {
 				),
 			),
 
+			// Glass Bubble Popover Submenu ("More" Item).
+			'enable_more_menu'          => 0,
+			'more_menu_title'           => __( 'More', 'nativly' ),
+			'more_menu_icon'            => 'grid',
+			'more_menu_items'           => array(),
+
 			// Style & Glassmorphic Appearance.
 			'style_preset'              => 'dark_liquid_pill',
 			'active_preset'             => 'dark_liquid',
@@ -179,6 +185,10 @@ class NTV_Activator {
 			'glass_opacity'             => 0.82,
 			'glass_blur'                => 20,
 			'border_radius'             => 999,
+
+			// Navbar Width Control: 'auto' (capsule), 'full' (calc(100% - 32px)), 'custom'.
+			'navbar_width_mode'         => 'auto',
+			'navbar_custom_width'       => '90%',
 
 			// Desktop Layout Protection: default 'hidden' leaves desktop 100% untouched.
 			'desktop_position'          => 'hidden',
@@ -200,6 +210,7 @@ class NTV_Activator {
 			'page_targeting_mode'       => 'global',
 			'excluded_page_ids'         => array(),
 			'specific_page_ids'         => array(),
+			'excluded_urls'             => '',
 			'exclude_on_cart'           => 0,
 			'exclude_on_checkout'       => 0,
 			'user_visibility'           => 'all',
