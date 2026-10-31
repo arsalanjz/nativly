@@ -1,9 +1,13 @@
 /**
- * Nativly - Expanding Glassmorphic Navbar & Native App Feel CSS
- * Author: Arsalan Jabarzare
- * Strict logical CSS properties for seamless LTR & RTL support.
+ * Nativly - Frontend Expanding Pill Glassmorphic Navbar Styles
+ *
+ * @package Nativly
+ * @author  Arsalan Jabarzare
  */
 
+/* ==========================================================================
+   CSS Custom Property Defaults (overridden dynamically via inline style)
+   ========================================================================== */
 :root {
   --ntv-active-bg: #0047FF;
   --ntv-active-text: #FFFFFF;
@@ -14,181 +18,156 @@
   --ntv-border-radius: 999px;
   --ntv-bottom-offset: 16px;
   --ntv-body-padding: 85px;
-  --ntv-badge-bg: #FF3B30;
-  --ntv-badge-text: #FFFFFF;
   --ntv-custom-width: 90%;
+  --ntv-badge-bg: #EF4444;
+  --ntv-badge-text: #FFFFFF;
 }
 
 /* ==========================================================================
-   Desktop Safety & Base Visibility Engine
+   Body Bottom Padding to prevent content occlusion
    ========================================================================== */
-
-/* By default, navbar container is hidden on desktop viewports */
-@media (min-width: 1024px) {
-  .ntv-glass-nav-container.ntv-desktop-hidden {
-    display: none !important;
-  }
-}
-
-/* ==========================================================================
-   Native Mobile App Feel Rules (Scoped to max-width: 768px)
-   ========================================================================== */
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   body {
-    padding-bottom: calc(var(--ntv-body-padding, 85px) + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  .ntv-overscroll-none {
-    overscroll-behavior-y: none;
-  }
-
-  .ntv-no-select,
-  .ntv-glass-nav {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Preserve text selection on all editable, informative and content areas */
-  input,
-  textarea,
-  [contenteditable="true"],
-  article,
-  .entry-content,
-  main p,
-  pre,
-  code {
-    -webkit-user-select: text !important;
-    user-select: text !important;
+    padding-bottom: var(--ntv-body-padding, 85px) !important;
   }
 }
 
 /* ==========================================================================
-   Navbar Container & Glassmorphic Shell (Instant Visibility)
+   Main Navbar Container
    ========================================================================== */
 .ntv-glass-nav-container {
   position: fixed;
+  left: 50%;
+  bottom: calc(var(--ntv-bottom-offset, 16px) + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateZ(0);
   z-index: 99999;
   display: flex;
   justify-content: center;
   align-items: center;
   pointer-events: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   box-sizing: border-box;
-  width: 100%;
-  left: 0;
-  right: 0;
-  opacity: 1;
-  visibility: visible;
 }
 
-/* Mobile & Tablet Positioning (Floating Bottom) */
-@media (max-width: 1023px) {
-  .ntv-glass-nav-container {
-    bottom: calc(var(--ntv-bottom-offset, 16px) + env(safe-area-inset-bottom, 0px));
-    padding-inline: 16px;
-  }
-}
-
-/* Desktop Positioning Overrides */
+/* Desktop Positioning */
 @media (min-width: 1024px) {
-  .ntv-glass-nav-container.ntv-desktop-bottom {
-    bottom: 24px;
-    padding-inline: 24px;
+  .ntv-glass-nav-container.ntv-desktop-hidden {
+    display: none !important;
   }
 
   .ntv-glass-nav-container.ntv-desktop-top {
-    top: 24px;
     bottom: auto;
-    padding-inline: 24px;
+    top: calc(var(--ntv-bottom-offset, 16px) + env(safe-area-inset-top, 0px));
   }
 
-  /* Only add body bottom padding on desktop if navbar is floating bottom */
+  .ntv-glass-nav-container.ntv-desktop-bottom {
+    top: auto;
+    bottom: calc(var(--ntv-bottom-offset, 16px) + env(safe-area-inset-bottom, 0px));
+  }
+
   body:has(.ntv-glass-nav-container.ntv-desktop-bottom) {
     padding-bottom: var(--ntv-body-padding, 85px) !important;
   }
 }
 
-/* Glassmorphic Nav Shell */
-.ntv-glass-nav {
-  pointer-events: auto;
-  position: relative;
-  display: flex;
-  align-items: center;
-  background-color: var(--ntv-glass-bg);
-  border: 1px solid var(--ntv-glass-border);
-  border-radius: var(--ntv-border-radius);
-  padding: 6px 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
-  max-width: 100%;
-  box-sizing: border-box;
-  backdrop-filter: blur(var(--ntv-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--ntv-blur)) saturate(180%);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, width 0.25s ease;
-}
-
-/* Navbar Width Modes */
-.ntv-glass-nav-container.ntv-width-auto .ntv-glass-nav {
+/* Width Modes */
+.ntv-glass-nav-container.ntv-width-auto {
   width: auto;
+  max-width: calc(100vw - 32px);
 }
 
 .ntv-glass-nav-container.ntv-width-full {
-  padding-inline: 16px;
-}
-.ntv-glass-nav-container.ntv-width-full .ntv-glass-nav {
-  width: calc(100% - 32px);
+  width: calc(100% - 24px) !important;
   max-width: 600px;
 }
+
+.ntv-glass-nav-container.ntv-width-full .ntv-glass-nav {
+  width: 100% !important;
+}
+
 .ntv-glass-nav-container.ntv-width-full .ntv-nav-list {
-  width: 100%;
-  justify-content: space-around;
+  width: 100% !important;
+  justify-content: space-around !important;
+}
+
+.ntv-glass-nav-container.ntv-width-custom {
+  width: var(--ntv-custom-width, 90%) !important;
+  max-width: 600px;
 }
 
 .ntv-glass-nav-container.ntv-width-custom .ntv-glass-nav {
-  width: var(--ntv-custom-width, 90%);
-  max-width: 600px;
-}
-.ntv-glass-nav-container.ntv-width-custom .ntv-nav-list {
-  width: 100%;
-  justify-content: space-around;
+  width: 100% !important;
 }
 
-/* Menu list flex container */
+.ntv-glass-nav-container.ntv-width-custom .ntv-nav-list {
+  width: 100% !important;
+  justify-content: space-around !important;
+}
+
+/* ==========================================================================
+   Glassmorphic Floating Nav Bar
+   ========================================================================== */
+.ntv-glass-nav {
+  display: inline-flex;
+  align-items: center;
+  pointer-events: auto;
+  background: var(--ntv-glass-bg, rgba(18, 18, 24, 0.82));
+  border: 1px solid var(--ntv-glass-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--ntv-border-radius, 999px);
+  padding: 6px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  box-sizing: border-box;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .ntv-glass-nav {
+    backdrop-filter: blur(var(--ntv-blur, 20px)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--ntv-blur, 20px)) saturate(180%);
+  }
+}
+
+/* Nav Item List */
 .ntv-nav-list {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
   list-style: none;
   margin: 0;
   padding: 0;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 /* ==========================================================================
-   Nav Items & Expanding Pill Animation (Logical RTL/LTR Support)
+   Navigation Items & Smooth Expanding Pill
    ========================================================================== */
 .ntv-nav-item {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-decoration: none !important;
-  color: var(--ntv-inactive-color);
-  min-width: 44px;
-  min-height: 44px;
   height: 44px;
-  padding-block: 0;
-  padding-inline: 10px;
-  border-radius: var(--ntv-border-radius);
-  transition: background-color 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-              color 0.25s ease,
-              padding 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.15s ease;
-  box-sizing: border-box;
-  overflow: hidden;
+  min-width: 44px;
+  padding: 0 12px;
+  border-radius: var(--ntv-border-radius, 999px);
+  color: var(--ntv-inactive-color, rgba(255, 255, 255, 0.7));
+  text-decoration: none !important;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
+  background: transparent;
+  border: none;
+  outline: none;
+  transition: background-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              color 0.22s ease,
+              padding 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-sizing: border-box;
+  position: relative;
 }
 
 .ntv-nav-item:hover,
@@ -197,18 +176,18 @@
 }
 
 .ntv-nav-item:active {
-  transform: scale(0.94);
+  transform: scale(0.95);
 }
 
-/* Active Tab: Expanding Pill */
+/* Active Item (Expanding Pill) */
 .ntv-nav-item.is-active {
-  background-color: var(--ntv-active-bg);
-  color: var(--ntv-active-text) !important;
-  padding-inline: 18px;
-  box-shadow: 0 4px 14px rgba(0, 71, 255, 0.4);
+  background: var(--ntv-active-bg, #0047FF);
+  color: var(--ntv-active-text, #FFFFFF);
+  padding: 0 18px;
+  box-shadow: 0 4px 16px rgba(0, 71, 255, 0.35);
 }
 
-/* Icon Wrapper */
+/* Icon Wrap */
 .ntv-icon-wrap {
   position: relative;
   display: inline-flex;
@@ -232,6 +211,14 @@
 
 .ntv-nav-item.is-active .ntv-icon-wrap svg {
   transform: scale(1.05);
+}
+
+/* Custom Media / Image Icon */
+.ntv-custom-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
 }
 
 /* Label: Collapsed by default, expands smoothly on active state */
@@ -264,7 +251,7 @@
   transform: translateX(0);
 }
 
-/* More trigger button style */
+/* More Trigger Button */
 .ntv-more-trigger {
   background: none;
   border: none;
@@ -308,25 +295,31 @@
   max-width: 320px;
 }
 
+/* Centered Flex Layout for Popover Items (Supports 1, 2, 3 or more symmetrically) */
 .ntv-bubble-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
 .ntv-bubble-item {
+  flex: 0 1 calc(33.333% - 10px);
+  min-width: 84px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 4px;
+  padding: 10px 6px;
   border-radius: 12px;
   text-decoration: none !important;
   color: var(--ntv-inactive-color, rgba(255, 255, 255, 0.75));
   background: rgba(255, 255, 255, 0.05);
   transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 .ntv-bubble-item:hover,
@@ -338,6 +331,13 @@
 
 .ntv-bubble-item:active {
   transform: scale(0.94);
+}
+
+.ntv-bubble-item.is-active {
+  background: var(--ntv-active-bg, #0047FF);
+  color: var(--ntv-active-text, #FFFFFF);
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0, 71, 255, 0.4);
 }
 
 .ntv-bubble-item-icon {
@@ -373,331 +373,59 @@
   position: absolute;
   top: -4px;
   inset-inline-end: -8px;
-  background-color: var(--ntv-badge-bg);
-  color: var(--ntv-badge-text);
+  background-color: var(--ntv-badge-bg, #EF4444);
+  color: var(--ntv-badge-text, #FFFFFF);
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  padding: 3px 6px;
   border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid var(--ntv-glass-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   pointer-events: none;
   z-index: 2;
-  box-sizing: border-box;
 }
 
-/* When active, slight contrast enhancement */
-.ntv-nav-item.is-active .ntv-badge {
-  border-color: var(--ntv-active-bg);
+.ntv-badge.is-hidden {
+  display: none !important;
 }
 
 /* ==========================================================================
-   PWA Components: Update Toast & Glass Install Prompt
+   Native Mobile App Feel Rules (scoped to mobile max-width: 768px)
    ========================================================================== */
-.ntv-pwa-container {
-  box-sizing: border-box;
-}
-
-/* SW Update Ready Glass Toast */
-.ntv-glass-toast {
-  position: fixed;
-  bottom: calc(var(--ntv-bottom-offset, 16px) + 70px + env(safe-area-inset-bottom, 0px));
-  inset-inline: 16px;
-  max-width: 380px;
-  margin: 0 auto;
-  z-index: 100000;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background-color: rgba(18, 18, 24, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  color: #FFFFFF;
-  font-size: 13px;
-  font-weight: 500;
-  animation: ntvToastSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  box-sizing: border-box;
-}
-
-@keyframes ntvToastSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+@media (max-width: 768px) {
+  .ntv-overscroll-none {
+    overscroll-behavior-y: none !important;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .ntv-no-select {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
-}
 
-.ntv-toast-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.ntv-toast-text {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ntv-toast-action {
-  background-color: var(--ntv-active-bg, #0047FF);
-  color: #FFFFFF;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity 0.2s ease;
-}
-
-.ntv-toast-action:hover,
-.ntv-toast-action:active {
-  opacity: 0.88;
-}
-
-/* Android / Chromium Glass Install Card */
-.ntv-glass-install-card {
-  position: fixed;
-  bottom: calc(var(--ntv-bottom-offset, 16px) + 70px + env(safe-area-inset-bottom, 0px));
-  inset-inline: 16px;
-  max-width: 400px;
-  margin: 0 auto;
-  z-index: 100000;
-  background-color: rgba(22, 22, 30, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 18px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  color: #FFFFFF;
-  box-sizing: border-box;
-  animation: ntvToastSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.ntv-install-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.ntv-install-app-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  object-fit: cover;
-  flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.ntv-install-info {
-  flex: 1;
-}
-
-.ntv-install-title {
-  margin: 0 0 4px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #FFFFFF;
-}
-
-.ntv-install-desc {
-  margin: 0;
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.4;
-}
-
-.ntv-install-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.ntv-btn-primary {
-  background-color: var(--ntv-active-bg, #0047FF);
-  color: #FFFFFF;
-  border: none;
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.ntv-btn-primary:active {
-  opacity: 0.85;
-}
-
-.ntv-btn-secondary {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-  border: none;
-  padding: 9px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.ntv-btn-secondary:hover,
-.ntv-btn-secondary:active {
-  color: #FFFFFF;
-}
-
-.ntv-btn-block {
-  width: 100%;
-  display: block;
-}
-
-/* iOS Safari "Add to Home Screen" Visual Modal */
-.ntv-ios-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 100001;
-  background-color: rgba(0, 0, 0, 0.65);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.ntv-glass-ios-modal {
-  width: 100%;
-  max-width: 420px;
-  background-color: rgba(24, 24, 32, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 24px;
-  padding: 22px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-  color: #FFFFFF;
-  box-sizing: border-box;
-  animation: ntvToastSlideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  margin-bottom: env(safe-area-inset-bottom, 12px);
-}
-
-.ntv-ios-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-
-.ntv-ios-app-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  object-fit: cover;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-.ntv-ios-title {
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #FFFFFF;
-}
-
-.ntv-ios-subtitle {
-  margin: 0;
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.ntv-ios-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 22px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 16px;
-  padding: 14px;
-}
-
-.ntv-ios-step {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.88);
-}
-
-.ntv-step-num {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: var(--ntv-active-bg, #0047FF);
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.ntv-step-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.ntv-share-icon {
-  color: #007AFF;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.ntv-add-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.12);
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #FFFFFF;
+  .ntv-no-select input,
+  .ntv-no-select textarea,
+  .ntv-no-select [contenteditable="true"],
+  .ntv-no-select article,
+  .ntv-no-select .entry-content,
+  .ntv-no-select main p,
+  .ntv-no-select pre,
+  .ntv-no-select code {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
 }
 
 /* ==========================================================================
-   Accessibility & Media Query Preferences
+   Accessibility: Reduced Motion & Transparency
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
+  .ntv-glass-nav-container,
   .ntv-glass-nav,
   .ntv-nav-item,
-  .ntv-icon-wrap svg,
   .ntv-label,
   .ntv-bubble-popover,
-  .ntv-bubble-item,
-  .ntv-glass-toast,
-  .ntv-glass-install-card,
-  .ntv-glass-ios-modal {
+  .ntv-bubble-item {
     transition: none !important;
     animation: none !important;
   }
@@ -705,12 +433,9 @@
 
 @media (prefers-reduced-transparency: reduce) {
   .ntv-glass-nav,
-  .ntv-bubble-glass-card,
-  .ntv-glass-toast,
-  .ntv-glass-install-card,
-  .ntv-glass-ios-modal {
+  .ntv-bubble-glass-card {
+    background: #121218 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    background-color: #121218 !important;
   }
 }

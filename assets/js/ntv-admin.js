@@ -8,6 +8,46 @@
 
   const data = window.ntvAdminData || {};
   let currentTargetRow = null;
+  let lastActiveColorPicker = null;
+
+  /**
+   * Helper: Hex to RGBA
+   */
+  function hexToRgba(hex, opacityPercent) {
+    if (!hex) return 'rgba(255, 255, 255, 1)';
+    let c = hex.replace('#', '');
+    if (c.length === 3) {
+      c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+    }
+    const num = parseInt(c, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    const a = (parseFloat(opacityPercent) / 100).toFixed(2);
+    const cleanAlpha = parseFloat(a);
+    return `rgba(${r}, ${g}, ${b}, ${cleanAlpha})`;
+  }
+
+  /**
+   * Helper: RGBA to Hex and Opacity
+   */
+  function rgbaToHexAndOpacity(rgbaStr, defaultHex, defaultOpacity) {
+    if (!rgbaStr) return { hex: defaultHex || '#FFFFFF', opacity: defaultOpacity || 100 };
+    const match = rgbaStr.match(/rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]+)\s*\)/i);
+    if (match) {
+      const r = parseInt(match[1], 10);
+      const g = parseInt(match[2], 10);
+      const b = parseInt(match[3], 10);
+      const a = parseFloat(match[4]);
+      const hex = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+      const opacity = Math.round(a * 100);
+      return { hex: hex, opacity: Math.max(0, Math.min(100, opacity)) };
+    }
+    if (/^#([a-f0-9]{3}|[a-f0-9]{6})$/i.test(rgbaStr)) {
+      return { hex: rgbaStr.toUpperCase(), opacity: 100 };
+    }
+    return { hex: defaultHex || '#FFFFFF', opacity: defaultOpacity || 100 };
+  }
 
   /**
    * Helper: Safely extract SVG string from localized icon catalog
@@ -77,9 +117,27 @@
   }
 
   /**
-   * Tab Navigation Switcher
+   * Tab Navigation Switcher with persistent active tab
    */
   function initTabs() {
+    // Check URL param first, then localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTab = urlParams.get('tab');
+    let initialTab = urlTab;
+    if (!initialTab) {
+      try {
+        initialTab = localStorage.getItem('ntv_active_tab');
+      } catch (e) {}
+    }
+
+    if (initialTab && $('#ntv-tab-' + initialTab).length) {
+      $('.ntv-tab-btn').removeClass('is-active');
+      $(`.ntv-tab-btn[data-tab="${initialTab}"]`).addClass('is-active');
+      $('.ntv-tab-content').removeClass('is-active');
+      $('#ntv-tab-' + initialTab).addClass('is-active');
+      $('#ntv-active-tab-input').val(initialTab);
+    }
+
     $('.ntv-tab-btn').on('click', function () {
       const tabId = $(this).data('tab');
 
@@ -88,6 +146,11 @@
 
       $('.ntv-tab-content').removeClass('is-active');
       $('#ntv-tab-' + tabId).addClass('is-active');
+
+      $('#ntv-active-tab-input').val(tabId);
+      try {
+        localStorage.setItem('ntv_active_tab', tabId);
+      } catch (e) {}
     });
 
     // Menu Source Radio Switcher
@@ -103,11 +166,12 @@
   }
 
   /**
-   * WordPress Color Pickers with live preview bindings
+   * WordPress Color Pickers, Opacity Sliders & Palette Swatches
    */
   function initColorPickers() {
     if ($.fn.wpColorPicker) {
-      $('.ntv-color-picker').wpColorPicker({
+      // Normal color pickers
+      $('.ntv-color-picker:not(.ntv-rgba-base-color)').wpColorPicker({
         change: function () {
           setTimeout(updateLivePreview, 50);
         },
@@ -115,9 +179,84 @@
           setTimeout(updateLivePreview, 50);
         }
       });
+
+      // Track last focused picker for swatches
+      $(document).on('focus click', '.wp-color-result, .wp-picker-container', function () {
+        lastActiveColorPicker = $(this).closest('.wp-picker-container').find('.ntv-color-picker');
+      });
+
+      // RGBA Color Pickers with Opacity Sliders
+      $('.ntv-color-with-opacity').each(function () {
+        const wrap = $(this);
+        const baseColorInput = wrap.find('.ntv-rgba-base-color');
+        const slider = wrap.find('.ntv-opacity-slider');
+        const opacityVal = wrap.find('.ntv-opacity-val');
+        const hiddenTarget = wrap.find('input[type="hidden"]');
+
+        baseColorInput.wpColorPicker({
+          change: function (event, ui) {
+            const hex = ui.color.toString();
+            const op = slider.val();
+            const rgba = hexToRgba(hex, op);
+            hiddenTarget.val(rgba);
+            setTimeout(updateLivePreview, 50);
+          },
+          clear: function () {
+            const hex = baseColorInput.data('default-color') || '#FFFFFF';
+            const op = slider.val();
+            const rgba = hexToRgba(hex, op);
+            hiddenTarget.val(rgba);
+            setTimeout(updateLivePreview, 50);
+          }
+        });
+
+        slider.on('input change', function () {
+          const op = $(this).val();
+          opacityVal.text(op + '%');
+          let hex = baseColorInput.val();
+          if (!hex || !hex.startsWith('#')) {
+            hex = baseColorInput.data('default-color') || '#FFFFFF';
+          }
+          const rgba = hexToRgba(hex, op);
+          hiddenTarget.val(rgba);
+          updateLivePreview();
+        });
+      });
     }
 
-    $('#ntv-inactive-icon-color, #ntv-color-inactive-icon, #ntv-glass-bg-color, #ntv-color-glass-bg, #ntv-glass-border-color').on('input change', function () {
+    // Palette Swatch Click Handler
+    $('.ntv-palette-swatch').on('click', function (e) {
+      e.preventDefault();
+      const color = $(this).data('color');
+      if (!color) return;
+
+      let targetPicker = lastActiveColorPicker;
+      if (!targetPicker || !targetPicker.length || !targetPicker.is(':visible')) {
+        targetPicker = $('#ntv-active-pill-bg');
+      }
+
+      if (targetPicker && targetPicker.length) {
+        if (targetPicker.hasClass('ntv-rgba-base-color')) {
+          const wrap = targetPicker.closest('.ntv-color-with-opacity');
+          const slider = wrap.find('.ntv-opacity-slider');
+          const hiddenTarget = wrap.find('input[type="hidden"]');
+          targetPicker.val(color);
+          if (targetPicker.wpColorPicker) {
+            targetPicker.wpColorPicker('color', color);
+          }
+          const rgba = hexToRgba(color, slider.val());
+          hiddenTarget.val(rgba);
+        } else {
+          targetPicker.val(color);
+          if (targetPicker.wpColorPicker) {
+            targetPicker.wpColorPicker('color', color);
+          }
+        }
+        updateLivePreview();
+      }
+    });
+
+    $('#ntv-inactive-icon-color, #ntv-glass-bg-color, #ntv-glass-border-color').on('input change', function () {
       updateLivePreview();
     });
   }
@@ -126,19 +265,19 @@
    * Sliders (Blur & Border Radius & Offset)
    */
   function initSliders() {
-    $('#ntv-glass-blur, #ntv-blur-slider').on('input change', function () {
+    $('#ntv-glass-blur').on('input change', function () {
       const val = $(this).val();
       $('#ntv-blur-val').text(val + 'px');
       updateLivePreview();
     });
 
-    $('#ntv-border-radius, #ntv-radius-slider').on('input change', function () {
+    $('#ntv-border-radius').on('input change', function () {
       const val = $(this).val();
       $('#ntv-radius-val').text(val + 'px');
       updateLivePreview();
     });
 
-    $('#ntv-mobile-bottom-offset, #ntv-offset-input').on('input change', function () {
+    $('#ntv-mobile-bottom-offset').on('input change', function () {
       const val = $(this).val();
       $('#ntv-offset-val').text(val + 'px');
       updateLivePreview();
@@ -188,6 +327,25 @@
       }
     };
 
+    function applyRgbaField(fieldId, rgbaValue, defaultHex, defaultOpacity) {
+      const field = $('#' + fieldId);
+      field.val(rgbaValue);
+      const wrap = field.closest('.ntv-color-with-opacity');
+      if (wrap.length) {
+        const parsed = rgbaToHexAndOpacity(rgbaValue, defaultHex, defaultOpacity);
+        const baseColorInput = wrap.find('.ntv-rgba-base-color');
+        const slider = wrap.find('.ntv-opacity-slider');
+        const valText = wrap.find('.ntv-opacity-val');
+
+        baseColorInput.val(parsed.hex);
+        if (baseColorInput.wpColorPicker) {
+          baseColorInput.wpColorPicker('color', parsed.hex);
+        }
+        slider.val(parsed.opacity);
+        valText.text(parsed.opacity + '%');
+      }
+    }
+
     $('.ntv-preset-card').on('click', function () {
       const presetKey = $(this).data('preset');
       const p = presets[presetKey];
@@ -198,26 +356,26 @@
       $('#ntv-active-preset-input').val(presetKey);
 
       // Apply values to inputs
-      const activePill = $('#ntv-active-pill-bg, #ntv-color-active-pill');
+      const activePill = $('#ntv-active-pill-bg');
       activePill.val(p.pill_bg);
       if (activePill.wpColorPicker) {
         activePill.wpColorPicker('color', p.pill_bg);
       }
 
-      const activeText = $('#ntv-active-text-color, #ntv-color-active-text');
+      const activeText = $('#ntv-active-text-color');
       activeText.val(p.text_color);
       if (activeText.wpColorPicker) {
         activeText.wpColorPicker('color', p.text_color);
       }
 
-      $('#ntv-inactive-icon-color, #ntv-color-inactive-icon').val(p.inactive_color);
-      $('#ntv-glass-bg-color, #ntv-color-glass-bg').val(p.glass_bg);
-      $('#ntv-glass-border-color').val(p.glass_border || 'rgba(255, 255, 255, 0.12)');
+      applyRgbaField('ntv-inactive-icon-color', p.inactive_color, '#FFFFFF', 70);
+      applyRgbaField('ntv-glass-bg-color', p.glass_bg, '#121218', 82);
+      applyRgbaField('ntv-glass-border-color', p.glass_border || 'rgba(255, 255, 255, 0.12)', '#FFFFFF', 12);
 
-      $('#ntv-glass-blur, #ntv-blur-slider').val(p.blur);
+      $('#ntv-glass-blur').val(p.blur);
       $('#ntv-blur-val').text(p.blur + 'px');
 
-      $('#ntv-border-radius, #ntv-radius-slider').val(p.radius);
+      $('#ntv-border-radius').val(p.radius);
       $('#ntv-radius-val').text(p.radius + 'px');
 
       updateLivePreview();
@@ -271,7 +429,7 @@
     });
 
     // Live update on input change
-    list.on('input change', '.ntv-item-title-input, .ntv-item-badge-type-select, .ntv-item-badge-text-input', function () {
+    list.on('input change', '.ntv-item-title-input, .ntv-item-url-input, .ntv-item-custom-svg-textarea, .ntv-item-badge-type-select, .ntv-item-badge-text-input', function () {
       updateLivePreview();
     });
 
@@ -285,7 +443,7 @@
         <div class="ntv-menu-item-row" data-index="${newIndex}">
           <div class="ntv-row-drag-handle" title="جابجایی آیتم"><span class="dashicons dashicons-menu"></span></div>
           <div class="ntv-row-preview-icon">
-            <button type="button" class="ntv-row-icon-trigger" title="${data.i18n.selectIcon || 'انتخاب آیکون'}">
+            <button type="button" class="ntv-row-icon-trigger" title="${data.i18n && data.i18n.selectIcon ? data.i18n.selectIcon : 'انتخاب آیکون'}">
               <span class="ntv-row-current-icon">${defaultIconSvg}</span>
             </button>
             <input type="hidden" name="ntv_settings[menu_items][${newIndex}][icon]" class="ntv-item-icon-input" value="${defaultIcon}">
@@ -295,8 +453,8 @@
           </div>
           <div class="ntv-row-fields">
             <div class="ntv-row-main-inputs">
-              <input type="text" name="ntv_settings[menu_items][${newIndex}][title]" class="ntv-item-title-input regular-text" value="آیتم جدید" placeholder="عنوان تب" required>
-              <input type="url" name="ntv_settings[menu_items][${newIndex}][url]" class="ntv-item-url-input regular-text" value="/" placeholder="https://..." required>
+              <input type="text" name="ntv_settings[menu_items][${newIndex}][title]" class="ntv-item-title-input regular-text" value="" placeholder="عنوان آیتم (مثلاً: فروشگاه)" required>
+              <input type="url" name="ntv_settings[menu_items][${newIndex}][url]" class="ntv-item-url-input regular-text" value="" placeholder="لینک مقصد (مثلاً: /shop)" required>
             </div>
             <div class="ntv-row-options-toggle">
               <button type="button" class="ntv-toggle-options-btn"><span class="dashicons dashicons-arrow-down-alt2"></span> گزینه‌های پیشرفته (نشان، آیکون سفارشی و دسترسی)</button>
@@ -317,8 +475,14 @@
                 </div>
               </div>
               <div class="ntv-field-group ntv-mt-2">
-                <label>کد SVG سفارشی (جایگزین آیکون‌های پیش‌فرض):</label>
-                <textarea name="ntv_settings[menu_items][${newIndex}][custom_svg]" class="large-text ntv-item-custom-svg-textarea" rows="2" placeholder="<svg viewBox='0 0 24 24'>...</svg>"></textarea>
+                <label>کد SVG سفارشی یا آدرس آیکون تصویر:</label>
+                <div style="display:flex; gap:8px; align-items:flex-start;">
+                  <textarea name="ntv_settings[menu_items][${newIndex}][custom_svg]" class="large-text ntv-item-custom-svg-textarea" rows="2" placeholder="<svg viewBox='0 0 24 24'>...</svg> یا https://.../icon.png"></textarea>
+                  <button type="button" class="button button-secondary ntv-upload-custom-icon-btn" title="آپلود / انتخاب آیکون از رسانه" style="white-space:nowrap; height:42px; display:inline-flex; align-items:center; gap:6px;">
+                    <span class="dashicons dashicons-admin-media"></span>
+                    انتخاب رسانه
+                  </button>
+                </div>
               </div>
               <div class="ntv-field-group ntv-mt-2">
                 <label>سطح دسترسی نمایش:</label>
@@ -403,7 +567,7 @@
     });
 
     // Live update on change
-    list.on('input change', '.ntv-item-title-input, .ntv-item-url-input', function () {
+    list.on('input change', '.ntv-item-title-input, .ntv-item-url-input, .ntv-item-custom-svg-textarea', function () {
       updateLivePreview();
     });
 
@@ -417,7 +581,7 @@
         <div class="ntv-menu-item-row ntv-bubble-item-row" data-index="${newIndex}">
           <div class="ntv-row-drag-handle" title="جابجایی آیتم"><span class="dashicons dashicons-menu"></span></div>
           <div class="ntv-row-preview-icon">
-            <button type="button" class="ntv-row-icon-trigger" title="${data.i18n.selectIcon || 'انتخاب آیکون'}">
+            <button type="button" class="ntv-row-icon-trigger" title="${data.i18n && data.i18n.selectIcon ? data.i18n.selectIcon : 'انتخاب آیکون'}">
               <span class="ntv-row-current-icon">${defaultIconSvg}</span>
             </button>
             <input type="hidden" name="ntv_settings[more_menu_items][${newIndex}][icon]" class="ntv-item-icon-input" value="${defaultIcon}">
@@ -427,11 +591,11 @@
           </div>
           <div class="ntv-row-fields">
             <div class="ntv-row-main-inputs">
-              <input type="text" name="ntv_settings[more_menu_items][${newIndex}][title]" class="regular-text ntv-item-title-input" value="لینک جدید" placeholder="عنوان لینک" required>
-              <input type="url" name="ntv_settings[more_menu_items][${newIndex}][url]" class="regular-text ntv-item-url-input" value="/" placeholder="https://..." required>
+              <input type="text" name="ntv_settings[more_menu_items][${newIndex}][title]" class="regular-text ntv-item-title-input" value="" placeholder="عنوان آیتم (مثلاً: درباره ما)" required>
+              <input type="url" name="ntv_settings[more_menu_items][${newIndex}][url]" class="regular-text ntv-item-url-input" value="" placeholder="لینک مقصد (مثلاً: /about)" required>
             </div>
             <div class="ntv-row-options-toggle">
-              <button type="button" class="ntv-toggle-options-btn"><span class="dashicons dashicons-arrow-down-alt2"></span> گزینه‌های دسترسی</button>
+              <button type="button" class="ntv-toggle-options-btn"><span class="dashicons dashicons-arrow-down-alt2"></span> گزینه‌های پیشرفته (آیکون سفارشی و دسترسی)</button>
             </div>
             <div class="ntv-row-extra-options" style="display:none;">
               <div class="ntv-field-group">
@@ -441,6 +605,16 @@
                   <option value="logged_in">فقط کاربران وارد شده</option>
                   <option value="guests">فقط کاربران مهمان</option>
                 </select>
+              </div>
+              <div class="ntv-field-group ntv-mt-2">
+                <label>کد SVG سفارشی یا آدرس آیکون تصویر:</label>
+                <div style="display:flex; gap:8px; align-items:flex-start;">
+                  <textarea name="ntv_settings[more_menu_items][${newIndex}][custom_svg]" class="large-text ntv-item-custom-svg-textarea" rows="2" placeholder="<svg viewBox='0 0 24 24'>...</svg> یا https://.../icon.png"></textarea>
+                  <button type="button" class="button button-secondary ntv-upload-custom-icon-btn" title="آپلود / انتخاب آیکون از رسانه" style="white-space:nowrap; height:42px; display:inline-flex; align-items:center; gap:6px;">
+                    <span class="dashicons dashicons-admin-media"></span>
+                    انتخاب رسانه
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -579,32 +753,87 @@
   }
 
   /**
-   * WP Media Uploader for 512x512 PWA Icon
+   * WP Media Uploader for 512x512 PWA Icon & Custom Icons
    */
   function initMediaUploader() {
-    let fileFrame;
+    let pwaFileFrame;
+    let customIconFrame;
+
+    // 512x512 PWA Icon
     $('#ntv-upload-icon-btn').on('click', function (e) {
       e.preventDefault();
 
-      if (fileFrame) {
-        fileFrame.open();
+      if (pwaFileFrame) {
+        pwaFileFrame.open();
         return;
       }
 
-      fileFrame = wp.media({
+      pwaFileFrame = wp.media({
         title: 'انتخاب آیکون PWA (حداقل 512x512 پیکسل)',
         button: { text: 'انتخاب آیکون' },
         multiple: false
       });
 
-      fileFrame.on('select', function () {
-        const attachment = fileFrame.state().get('selection').first().toJSON();
+      pwaFileFrame.on('select', function () {
+        const attachment = pwaFileFrame.state().get('selection').first().toJSON();
         $('#ntv-pwa-icon-id').val(attachment.id);
         $('#ntv-pwa-icon-512').val(attachment.url);
         $('#ntv-icon-512-preview').html(`<img src="${attachment.url}" alt="Icon Preview">`);
       });
 
-      fileFrame.open();
+      pwaFileFrame.open();
+    });
+
+    // Custom Icon / Media upload for repeater rows
+    $(document).on('click', '.ntv-upload-custom-icon-btn', function (e) {
+      e.preventDefault();
+      const row = $(this).closest('.ntv-menu-item-row');
+
+      customIconFrame = wp.media({
+        title: 'انتخاب یا آپلود آیکون سفارشی / تصویر',
+        button: { text: 'انتخاب این آیکون' },
+        multiple: false
+      });
+
+      customIconFrame.on('select', function () {
+        const attachment = customIconFrame.state().get('selection').first().toJSON();
+        row.find('.ntv-item-custom-svg-input').val(attachment.url);
+        row.find('.ntv-item-custom-svg-textarea').val(attachment.url);
+        row.find('.ntv-item-icon-type-input').val('custom');
+        row.find('.ntv-row-current-icon').html(`<img src="${attachment.url}" class="ntv-custom-icon" style="width:22px;height:22px;object-fit:contain;">`);
+        updateLivePreview();
+      });
+
+      customIconFrame.open();
+    });
+
+    // Custom Icon upload from within Lucide modal
+    $('#ntv-modal-upload-icon-btn').on('click', function (e) {
+      e.preventDefault();
+      customIconFrame = wp.media({
+        title: 'انتخاب یا آپلود آیکون سفارشی / تصویر',
+        button: { text: 'انتخاب این آیکون' },
+        multiple: false
+      });
+
+      customIconFrame.on('select', function () {
+        const attachment = customIconFrame.state().get('selection').first().toJSON();
+        if (currentTargetRow) {
+          if (currentTargetRow.is('#ntv-more-menu-icon-trigger') || currentTargetRow.attr('id') === 'ntv-more-menu-icon-trigger') {
+            $('#ntv-more-menu-icon-input').val(attachment.url);
+            $('#ntv-more-menu-icon-preview').html(`<img src="${attachment.url}" class="ntv-custom-icon" style="width:22px;height:22px;object-fit:contain;">`);
+          } else {
+            currentTargetRow.find('.ntv-item-custom-svg-input').val(attachment.url);
+            currentTargetRow.find('.ntv-item-custom-svg-textarea').val(attachment.url);
+            currentTargetRow.find('.ntv-item-icon-type-input').val('custom');
+            currentTargetRow.find('.ntv-row-current-icon').html(`<img src="${attachment.url}" class="ntv-custom-icon" style="width:22px;height:22px;object-fit:contain;">`);
+          }
+          $('#ntv-icon-picker-modal').fadeOut(150);
+          updateLivePreview();
+        }
+      });
+
+      customIconFrame.open();
     });
   }
 
@@ -626,9 +855,9 @@
           const v = res.data && res.data.version ? res.data.version : Date.now();
           $('#ntv-cache-version-badge').text('ntv-v' + v);
           $('#ntv-tools-cache-version').text('ntv-v' + v);
-          showAjaxNotice(res.data.message || data.i18n.purgeSuccess, 'updated');
+          showAjaxNotice(res.data.message || (data.i18n && data.i18n.purgeSuccess ? data.i18n.purgeSuccess : 'کش با موفقیت پاک‌سازی شد.'), 'updated');
         } else {
-          showAjaxNotice(res.data.message || 'خطا در پاک‌سازی کش', 'error');
+          showAjaxNotice((res.data && res.data.message) || 'خطا در پاک‌سازی کش', 'error');
         }
       }).fail(function () {
         btn.prop('disabled', false).removeClass('updating-message');
@@ -643,7 +872,8 @@
   function initAjaxReset() {
     $('#ntv-reset-settings-btn').on('click', function (e) {
       e.preventDefault();
-      if (!confirm(data.i18n.resetConfirm)) {
+      const confirmMsg = (data.i18n && data.i18n.resetConfirm) ? data.i18n.resetConfirm : 'آیا مطمئن هستید که می‌خواهید همه تنظیمات را بازنشانی کنید؟';
+      if (!confirm(confirmMsg)) {
         return;
       }
 
@@ -654,97 +884,119 @@
         if (res.success) {
           window.location.reload();
         } else {
-          showAjaxNotice(res.data.message || 'خطا در بازنشانی تنظیمات', 'error');
+          showAjaxNotice((res.data && res.data.message) || 'خطا در بازنشانی تنظیمات', 'error');
         }
+      }).fail(function () {
+        showAjaxNotice('خطای ارتباط با سرور', 'error');
       });
     });
   }
 
   /**
-   * Theme Header Hiding Preset Toggle
+   * Theme Header Hiding Preset Switcher
    */
   function initThemeHeaderHidingToggle() {
-    $('select[name="ntv_settings[header_hiding_preset]"]').on('change', function () {
+    const presetSelect = $('select[name="ntv_settings[header_hiding_preset]"]');
+    const customWrap = $('#ntv-custom-selectors-wrap');
+
+    presetSelect.on('change', function () {
       if ($(this).val() === 'custom') {
-        $('input[name="ntv_settings[custom_header_selector]"]').closest('.ntv-field-group').slideDown(200);
+        customWrap.slideDown(200);
+      } else {
+        customWrap.slideUp(200);
       }
     });
   }
 
   /**
-   * Diagnostics Persian Tooltips & Explanations Accordion Toggle
+   * Diagnostics Copy System Info Helper
    */
   function initDiagnosticsHelp() {
-    $('.ntv-help-trigger').on('click', function (e) {
+    $('#ntv-copy-diagnostics-btn').on('click', function (e) {
       e.preventDefault();
-      $(this).closest('.ntv-check-content').find('.ntv-help-box').slideToggle(200);
+      const codeBlock = $('#ntv-diagnostics-report').text();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codeBlock).then(function () {
+          alert('گزارش عیب‌یابی با موفقیت در کلیپ‌بورد کپی شد.');
+        });
+      } else {
+        const temp = $('<textarea>');
+        $('body').append(temp);
+        temp.val(codeBlock).select();
+        document.execCommand('copy');
+        temp.remove();
+        alert('گزارش عیب‌یابی با موفقیت در کلیپ‌بورد کپی شد.');
+      }
     });
   }
 
   /**
-   * Show AJAX Notice Bar
+   * Helper: Show transient admin notice for AJAX responses
    */
-  function showAjaxNotice(msg, type) {
+  function showAjaxNotice(message, type) {
     const notice = $('#ntv-ajax-notice');
-    notice.removeClass('notice-success notice-error updated error')
-          .addClass(type === 'updated' ? 'notice-success updated' : 'notice-error error');
-    notice.find('p').text(msg);
+    notice.removeClass('notice-success notice-error notice-warning updated error')
+      .addClass(type === 'updated' ? 'notice-success updated' : 'notice-error error')
+      .find('p').text(message);
+
     notice.slideDown(200);
     setTimeout(function () {
-      notice.slideUp(300);
+      notice.slideUp(200);
     }, 4000);
   }
 
   /**
-   * UPDATE LIVE PREVIEW IN PHONE MOCKUP
+   * Helper: Render icon in preview (handles Lucide, custom SVG, and image URLs)
+   */
+  function renderItemIcon(iconType, iconKey, customSvg) {
+    if (iconType === 'custom' && customSvg) {
+      const trimmed = customSvg.trim();
+      if (/^(https?:\/\/|\/)/i.test(trimmed)) {
+        return `<img src="${trimmed}" class="ntv-custom-icon" style="width:22px;height:22px;object-fit:contain;display:block;">`;
+      }
+      if (trimmed.includes('<svg')) {
+        return trimmed;
+      }
+    }
+    return getIconSvg(iconKey || 'compass');
+  }
+
+  /**
+   * Core Live Interactive Mobile Preview Engine
    */
   function updateLivePreview() {
-    const previewList = $('#ntv-preview-nav-list');
-    const activePillColor = $('#ntv-active-pill-bg, #ntv-color-active-pill').val() || '#0047FF';
-    const activeTextColor = $('#ntv-active-text-color, #ntv-color-active-text').val() || '#FFFFFF';
-    const inactiveIconColor = $('#ntv-inactive-icon-color, #ntv-color-inactive-icon').val() || 'rgba(255, 255, 255, 0.7)';
-    const glassBg = $('#ntv-glass-bg-color, #ntv-color-glass-bg').val() || 'rgba(18, 18, 24, 0.82)';
-    const glassBorder = $('#ntv-glass-border-color').val() || 'rgba(255, 255, 255, 0.12)';
-    const blur = $('#ntv-glass-blur, #ntv-blur-slider').val() || 20;
-    const radius = $('#ntv-border-radius, #ntv-radius-slider').val() || 999;
-    const offset = $('#ntv-mobile-bottom-offset, #ntv-offset-input').val() || 16;
-    const widthMode = $('input[name="ntv_settings[navbar_width_mode]"]:checked').val() || 'auto';
-    const customWidth = $('#ntv-navbar-custom-width').val() || '90%';
-
-    // Apply CSS Variables directly to Mockup container & elements
     const mockupNav = $('#ntv-preview-nav-root');
-    const glassNav = mockupNav.find('.ntv-glass-nav');
+    const previewList = $('#ntv-preview-nav-list');
+    if (!mockupNav.length || !previewList.length) return;
 
-    mockupNav.css('bottom', offset + 'px');
+    // Get current values
+    const pillBg = $('#ntv-active-pill-bg').val() || '#0047FF';
+    const textColor = $('#ntv-active-text-color').val() || '#FFFFFF';
+    const inactiveColor = $('#ntv-inactive-icon-color').val() || 'rgba(255, 255, 255, 0.7)';
+    const glassBg = $('#ntv-glass-bg-color').val() || 'rgba(18, 18, 24, 0.82)';
+    const glassBorder = $('#ntv-glass-border-color').val() || 'rgba(255, 255, 255, 0.12)';
+    const blur = $('#ntv-glass-blur').val() || 20;
+    const radius = $('#ntv-border-radius').val() || 999;
+    const widthMode = $('input[name="ntv_settings[navbar_width_mode]"]:checked').val() || 'auto';
+    const customWidth = $('#ntv-navbar-custom-width').val() || 340;
 
-    // Apply Width Mode to Mockup
+    // Width classes
     mockupNav.removeClass('ntv-width-auto ntv-width-full ntv-width-custom');
     if (widthMode === 'full') {
       mockupNav.addClass('ntv-width-full');
-      mockupNav.css('width', 'calc(100% - 24px)');
-      mockupNav.css('max-width', 'none');
+      mockupNav[0].style.removeProperty('--ntv-custom-width');
     } else if (widthMode === 'custom') {
       mockupNav.addClass('ntv-width-custom');
-      mockupNav.css('width', customWidth);
-      mockupNav.css('max-width', customWidth);
+      mockupNav[0].style.setProperty('--ntv-custom-width', customWidth + 'px');
     } else {
       mockupNav.addClass('ntv-width-auto');
-      mockupNav.css('width', 'auto');
-      mockupNav.css('max-width', 'none');
+      mockupNav[0].style.removeProperty('--ntv-custom-width');
     }
 
-    glassNav.css({
-      'background-color': glassBg,
-      'border-color': glassBorder,
-      'backdrop-filter': `blur(${blur}px)`,
-      '-webkit-backdrop-filter': `blur(${blur}px)`,
-      'border-radius': radius + 'px'
-    });
-
-    // Mockup scoped CSS Variables
-    mockupNav[0].style.setProperty('--ntv-active-bg', activePillColor);
-    mockupNav[0].style.setProperty('--ntv-active-text', activeTextColor);
-    mockupNav[0].style.setProperty('--ntv-inactive-color', inactiveIconColor);
+    // Apply CSS Variables directly to the preview element
+    mockupNav[0].style.setProperty('--ntv-active-pill-bg', pillBg);
+    mockupNav[0].style.setProperty('--ntv-active-text', textColor);
+    mockupNav[0].style.setProperty('--ntv-inactive-icon', inactiveColor);
     mockupNav[0].style.setProperty('--ntv-glass-bg', glassBg);
     mockupNav[0].style.setProperty('--ntv-glass-border', glassBorder);
     mockupNav[0].style.setProperty('--ntv-glass-blur', blur + 'px');
@@ -752,16 +1004,21 @@
 
     // Build Preview Items from Repeater
     let itemsHtml = '';
-    const activeIndex = previewList.find('.ntv-nav-item.is-active').data('index') || 0;
+    let currentActiveIndex = previewList.find('.ntv-nav-item.is-active').data('index');
+    if (typeof currentActiveIndex === 'undefined' || currentActiveIndex === null) {
+      currentActiveIndex = 0;
+    }
 
     $('#ntv-menu-items-list .ntv-menu-item-row').each(function (idx) {
       const title = $(this).find('.ntv-item-title-input').val() || 'تب';
       const iconKey = $(this).find('.ntv-item-icon-input').val() || 'home';
+      const iconType = $(this).find('.ntv-item-icon-type-input').val() || 'lucide';
+      const customSvg = $(this).find('.ntv-item-custom-svg-input').val() || $(this).find('.ntv-item-custom-svg-textarea').val() || '';
       const badgeType = $(this).find('.ntv-item-badge-type-select').val();
       const badgeText = $(this).find('.ntv-item-badge-text-input').val();
-      const iconSvg = getIconSvg(iconKey);
+      const iconSvg = renderItemIcon(iconType, iconKey, customSvg);
 
-      const isActive = (idx === parseInt(activeIndex, 10));
+      const isActive = (idx === parseInt(currentActiveIndex, 10));
       const activeClass = isActive ? 'is-active' : '';
 
       let badgeHtml = '';
@@ -803,7 +1060,9 @@
       $('#ntv-bubble-menu-items-list .ntv-bubble-item-row').each(function () {
         const bTitle = $(this).find('.ntv-item-title-input').val() || 'لینک';
         const bIcon = $(this).find('.ntv-item-icon-input').val() || 'compass';
-        const bSvg = getIconSvg(bIcon);
+        const bIconType = $(this).find('.ntv-item-icon-type-input').val() || 'lucide';
+        const bCustomSvg = $(this).find('.ntv-item-custom-svg-input').val() || $(this).find('.ntv-item-custom-svg-textarea').val() || '';
+        const bSvg = renderItemIcon(bIconType, bIcon, bCustomSvg);
 
         bubbleItemsHtml += `
           <a href="javascript:void(0)" class="ntv-bubble-item">
@@ -814,7 +1073,7 @@
       });
 
       if (!bubbleItemsHtml) {
-        bubbleItemsHtml = '<p style="color:#94a3b8; font-size:11px; margin:8px auto; text-align:center; grid-column:span 3;">آیتمی در منوی حبابی وجود ندارد.</p>';
+        bubbleItemsHtml = '<p style="color:#94a3b8; font-size:11px; margin:8px auto; text-align:center; width:100%;">آیتمی در منوی حبابی وجود ندارد.</p>';
       }
       $('#ntv-mockup-bubble-grid').html(bubbleItemsHtml);
     } else {

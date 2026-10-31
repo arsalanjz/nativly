@@ -1,30 +1,29 @@
 <?php
 /**
- * Icon Library & Strict SVG Sanitizer
+ * Nativly - Safe Vector Icons Engine & Lucide Catalog
+ *
+ * Provides pre-rendered, mathematically clean Lucide SVG icons and
+ * strict DOMDocument vector sanitization to prevent XSS.
  *
  * @package Nativly
- * @author  Arsalan Jabarzare
  */
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Class NTV_Icons
- *
- * Provides a curated static catalog of 25+ Lucide SVG icons and
- * a hardened DOMDocument-based SVG sanitizer.
  */
 class NTV_Icons {
 
 	/**
-	 * Static cache for icon catalog.
+	 * In-memory cache of the icon catalog.
 	 *
-	 * @var array|null
+	 * @var array<string, array{name: string, path: string}>|null
 	 */
 	private static $catalog = null;
 
 	/**
-	 * Retrieve full catalog of clean, MIT-licensed Lucide SVG icons.
+	 * Retrieve standard 24-piece Lucide SVG path definitions for mobile app navigation.
 	 *
 	 * @return array<string, array{name: string, path: string}>
 	 */
@@ -36,27 +35,23 @@ class NTV_Icons {
 		self::$catalog = array(
 			'home'           => array(
 				'name' => __( 'Home', 'nativly' ),
-				'path' => '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>',
-			),
-			'book-open'      => array(
-				'name' => __( 'Courses / Book', 'nativly' ),
-				'path' => '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>',
-			),
-			'grid'           => array(
-				'name' => __( 'Grid / Categories', 'nativly' ),
-				'path' => '<rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect>',
+				'path' => '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>',
 			),
 			'shopping-bag'   => array(
-				'name' => __( 'Shopping Bag', 'nativly' ),
+				'name' => __( 'Store / Bag', 'nativly' ),
 				'path' => '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path>',
 			),
 			'shopping-cart'  => array(
-				'name' => __( 'Shopping Cart', 'nativly' ),
+				'name' => __( 'Cart', 'nativly' ),
 				'path' => '<circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>',
 			),
 			'user'           => array(
 				'name' => __( 'User / Profile', 'nativly' ),
 				'path' => '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',
+			),
+			'grid'           => array(
+				'name' => __( 'Categories / Grid', 'nativly' ),
+				'path' => '<rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect>',
 			),
 			'search'         => array(
 				'name' => __( 'Search', 'nativly' ),
@@ -176,16 +171,29 @@ class NTV_Icons {
 	}
 
 	/**
-	 * Get complete SVG markup for an icon key or custom SVG string.
+	 * Get complete SVG or custom image markup for an icon key, custom SVG, or image URL.
 	 *
-	 * @param string               $key_or_custom_svg Icon key from catalog or raw SVG string.
-	 * @param array<string,string> $custom_attrs      Optional attributes to add/override on root <svg>.
-	 * @return string Clean, safe SVG markup.
+	 * @param string               $key_or_custom_svg Icon key, raw SVG, or image/SVG URL.
+	 * @param array<string,string> $custom_attrs      Optional attributes to add/override.
+	 * @return string Clean, safe icon markup.
 	 */
 	public static function get_icon_svg( $key_or_custom_svg, $custom_attrs = array() ) {
 		$key_or_custom_svg = trim( (string) $key_or_custom_svg );
 		if ( empty( $key_or_custom_svg ) ) {
 			return '';
+		}
+
+		// Check if it is a media image or SVG file URL.
+		if ( 0 === strpos( $key_or_custom_svg, 'http://' ) || 0 === strpos( $key_or_custom_svg, 'https://' ) || 0 === strpos( $key_or_custom_svg, '/' ) ) {
+			$img_class = 'ntv-custom-icon';
+			if ( ! empty( $custom_attrs['class'] ) ) {
+				$img_class .= ' ' . sanitize_html_class( $custom_attrs['class'] );
+			}
+			return sprintf(
+				'<img src="%s" class="%s" alt="" aria-hidden="true" style="width:22px;height:22px;object-fit:contain;display:block;" />',
+				esc_url( $key_or_custom_svg ),
+				esc_attr( $img_class )
+			);
 		}
 
 		$catalog = self::get_catalog();
@@ -259,31 +267,34 @@ class NTV_Icons {
 			$disable_entities = libxml_disable_entity_loader( true );
 		}
 
-		$dom = new DOMDocument();
-		$dom->resolveExternals   = false;
-		$dom->substituteEntities = false;
+		$doc = new DOMDocument();
+		$doc->formatOutput = false;
+		$doc->preserveWhiteSpace = false;
 
-		// Prepend XML declaration for UTF-8 preservation.
-		$xml_prefix = '<?xml version="1.0" encoding="UTF-8"?>';
-		$loaded     = $dom->loadXML( $xml_prefix . $svg, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
-
-		if ( ! $loaded ) {
-			// Fallback with HTML encapsulation for resilient parsing.
-			$html_wrapper = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>' . $svg . '</body></html>';
-			$loaded       = $dom->loadHTML( $html_wrapper, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
+		// Load XML securely without resolving external entities.
+		$load_flags = LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING;
+		if ( defined( 'LIBXML_HTML_NOIMPLIED' ) && defined( 'LIBXML_HTML_NODEFDTD' ) ) {
+			$load_flags |= LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD;
 		}
 
-		if ( ! $loaded ) {
-			libxml_clear_errors();
-			libxml_use_internal_errors( $libxml_prev_state );
-			if ( null !== $disable_entities && function_exists( 'libxml_disable_entity_loader' ) ) {
-				// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated
-				libxml_disable_entity_loader( $disable_entities );
-			}
+		$loaded = @$doc->loadXML( $svg, $load_flags );
+
+		if ( function_exists( 'libxml_disable_entity_loader' ) && PHP_VERSION_ID < 80000 && null !== $disable_entities ) {
+			// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated
+			libxml_disable_entity_loader( $disable_entities );
+		}
+		libxml_use_internal_errors( $libxml_prev_state );
+
+		if ( ! $loaded || ! $doc->documentElement ) {
 			return '';
 		}
 
-		// Strictly allowed SVG tags.
+		// Verify root node is <svg>.
+		if ( 'svg' !== strtolower( $doc->documentElement->nodeName ) ) {
+			return '';
+		}
+
+		// Whitelisted SVG tags.
 		$allowed_tags = array(
 			'svg',
 			'path',
@@ -292,12 +303,15 @@ class NTV_Icons {
 			'line',
 			'polyline',
 			'polygon',
+			'ellipse',
 			'g',
-			'title',
-			'desc',
+			'defs',
+			'lineargradient',
+			'radialgradient',
+			'stop',
 		);
 
-		// Strictly allowed SVG attributes.
+		// Whitelisted presentation attributes.
 		$allowed_attrs = array(
 			'xmlns',
 			'viewbox',
@@ -308,8 +322,8 @@ class NTV_Icons {
 			'stroke-width',
 			'stroke-linecap',
 			'stroke-linejoin',
-			'class',
-			'id',
+			'stroke-dasharray',
+			'stroke-dashoffset',
 			'd',
 			'cx',
 			'cy',
@@ -323,101 +337,73 @@ class NTV_Icons {
 			'x2',
 			'y2',
 			'points',
-			'transform',
+			'class',
+			'id',
 			'opacity',
-			'fill-opacity',
-			'stroke-opacity',
-			'stroke-dasharray',
-			'stroke-dashoffset',
-			'stroke-miterlimit',
-			'clip-rule',
-			'fill-rule',
+			'transform',
+			'style',
 			'aria-hidden',
 			'role',
+			'offset',
+			'stop-color',
+			'stop-opacity',
 		);
 
-		$nodes_to_remove = array();
-		$all_elements    = $dom->getElementsByTagName( '*' );
+		self::sanitize_node( $doc->documentElement, $allowed_tags, $allowed_attrs );
 
-		foreach ( $all_elements as $element ) {
-			$tag_name = strtolower( $element->tagName );
+		return $doc->saveXML( $doc->documentElement );
+	}
 
-			// Ignore HTML container tags when parsed via loadHTML.
-			if ( in_array( $tag_name, array( 'html', 'head', 'body', 'meta' ), true ) ) {
-				continue;
-			}
+	/**
+	 * Recursive node purifier for DOMDocument.
+	 *
+	 * @param DOMNode       $node          DOM Node to check.
+	 * @param array<string> $allowed_tags  Allowed lowercase tag names.
+	 * @param array<string> $allowed_attrs Allowed lowercase attribute names.
+	 * @return void
+	 */
+	private static function sanitize_node( DOMNode $node, array $allowed_tags, array $allowed_attrs ) {
+		if ( XML_ELEMENT_NODE !== $node->nodeType ) {
+			return;
+		}
 
-			if ( ! in_array( $tag_name, $allowed_tags, true ) ) {
-				$nodes_to_remove[] = $element;
-				continue;
-			}
+		$tag_name = strtolower( $node->nodeName );
 
-			if ( $element->hasAttributes() ) {
-				$attrs_to_remove = array();
+		// Remove non-whitelisted element.
+		if ( ! in_array( $tag_name, $allowed_tags, true ) ) {
+			$node->parentNode->removeChild( $node );
+			return;
+		}
 
-				foreach ( $element->attributes as $attr ) {
-					$attr_name  = strtolower( $attr->nodeName );
-					$attr_value = trim( $attr->nodeValue );
+		// Purge dangerous attributes.
+		if ( $node->hasAttributes() ) {
+			$attrs_to_remove = array();
+			foreach ( $node->attributes as $attr ) {
+				$attr_name  = strtolower( $attr->nodeName );
+				$attr_value = strtolower( trim( $attr->nodeValue ) );
 
-					// Disallow any event handler (onload, onclick, onerror, etc.).
-					if ( 0 === strpos( $attr_name, 'on' ) ) {
-						$attrs_to_remove[] = $attr->nodeName;
-						continue;
-					}
-
-					// Disallow dangerous URI schemes.
-					if ( preg_match( '/\s*(javascript|vbscript|data):/i', $attr_value ) ) {
-						$attrs_to_remove[] = $attr->nodeName;
-						continue;
-					}
-
-					// Disallow CSS expressions or behaviors.
-					if ( false !== stripos( $attr_value, 'expression' ) || false !== stripos( $attr_value, 'behavior' ) ) {
-						$attrs_to_remove[] = $attr->nodeName;
-						continue;
-					}
-
-					// Allowlist check.
-					if ( ! in_array( $attr_name, $allowed_attrs, true ) ) {
-						$attrs_to_remove[] = $attr->nodeName;
-					}
+				if ( ! in_array( $attr_name, $allowed_attrs, true ) ) {
+					$attrs_to_remove[] = $attr->nodeName;
+					continue;
 				}
 
-				foreach ( $attrs_to_remove as $attr_to_remove ) {
-					$element->removeAttribute( $attr_to_remove );
+				// Block inline JS handlers (on*) or javascript: URIs.
+				if ( 0 === strpos( $attr_name, 'on' ) || false !== strpos( $attr_value, 'javascript:' ) || false !== strpos( $attr_value, 'data:' ) ) {
+					$attrs_to_remove[] = $attr->nodeName;
 				}
 			}
-		}
 
-		// Remove disallowed elements from DOM tree.
-		foreach ( $nodes_to_remove as $node ) {
-			if ( $node->parentNode ) {
-				$node->parentNode->removeChild( $node );
+			foreach ( $attrs_to_remove as $attr_name ) {
+				$node->removeAttribute( $attr_name );
 			}
 		}
 
-		// Extract root <svg> element.
-		$svg_elements = $dom->getElementsByTagName( 'svg' );
-		if ( 0 === $svg_elements->length ) {
-			libxml_clear_errors();
-			libxml_use_internal_errors( $libxml_prev_state );
-			if ( null !== $disable_entities && function_exists( 'libxml_disable_entity_loader' ) ) {
-				// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated
-				libxml_disable_entity_loader( $disable_entities );
+		// Recursively process child nodes.
+		if ( $node->hasChildNodes() ) {
+			$children = iterator_to_array( $node->childNodes );
+			foreach ( $children as $child ) {
+				self::sanitize_node( $child, $allowed_tags, $allowed_attrs );
 			}
-			return '';
 		}
-
-		$root_svg  = $svg_elements->item( 0 );
-		$clean_svg = $dom->saveXML( $root_svg );
-
-		libxml_clear_errors();
-		libxml_use_internal_errors( $libxml_prev_state );
-		if ( null !== $disable_entities && function_exists( 'libxml_disable_entity_loader' ) ) {
-			// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated
-			libxml_disable_entity_loader( $disable_entities );
-		}
-
-		return is_string( $clean_svg ) ? trim( $clean_svg ) : '';
 	}
 }

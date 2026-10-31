@@ -254,6 +254,9 @@ class NTV_Navbar {
 		$css .= "\t--ntv-custom-width: " . esc_attr( $custom_width ) . ";\n";
 		$css .= "}\n";
 
+		// Critical rule for immediate render without paint delay.
+		$css .= ".ntv-glass-nav-container { opacity: 1 !important; visibility: visible !important; }\n";
+
 		// View transitions feature.
 		if ( ! empty( $settings['enable_view_transitions'] ) ) {
 			$css .= "@view-transition { navigation: auto; }\n";
@@ -359,13 +362,20 @@ class NTV_Navbar {
 
 		$item_url     = trailingslashit( strtok( (string) $item['url'], '?' ) );
 		$current_url  = trailingslashit( strtok( self::get_current_request_url(), '?' ) );
-		$current_path = (string) wp_parse_url( $current_url, PHP_URL_PATH );
-		$item_path    = (string) wp_parse_url( $item_url, PHP_URL_PATH );
+		$current_path = trailingslashit( (string) wp_parse_url( $current_url, PHP_URL_PATH ) ?: '/' );
+		$item_path    = trailingslashit( (string) wp_parse_url( $item_url, PHP_URL_PATH ) ?: '/' );
+		$home_path    = trailingslashit( (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH ) ?: '/' );
+		$home_url     = trailingslashit( home_url( '/' ) );
 
-		$home_path = trailingslashit( wp_parse_url( home_url( '/' ), PHP_URL_PATH ) ?: '/' );
+		// Home detection: ONLY active when strictly on front page, home, or root path.
+		// Never match home as a prefix for subpages (e.g. /blog/ or /shop/).
+		$is_home_item = ( $item_url === $home_url || $item_path === $home_path || '/' === $item_path );
+		if ( $is_home_item ) {
+			return ( is_front_page() || is_home() || $current_path === $home_path );
+		}
 
-		// Priority 1: Exact URL or Path Match.
-		if ( $current_url === $item_url || ( ! empty( $item_path ) && ! empty( $current_path ) && $item_path === $current_path ) ) {
+		// Priority 1: Exact URL or Path Match (for non-home items).
+		if ( $current_url === $item_url || ( ! empty( $item_path ) && $item_path === $current_path ) ) {
 			return true;
 		}
 
@@ -407,8 +417,8 @@ class NTV_Navbar {
 			}
 		}
 
-		// Priority 3: Hierarchy & CPT Archive / Single Mappings.
-		if ( ! empty( $item_path ) && $item_path !== $home_path && ! empty( $current_path ) ) {
+		// Priority 3: Hierarchy & CPT Archive / Single Mappings (strictly non-home items).
+		if ( ! empty( $item_path ) && $item_path !== $home_path && '/' !== $item_path && ! empty( $current_path ) ) {
 			// Check if current path starts with item path (child page or nested taxonomy/archive).
 			if ( 0 === strpos( $current_path, $item_path ) ) {
 				return true;
@@ -453,38 +463,6 @@ class NTV_Navbar {
 		$is_rtl           = is_rtl();
 		$dir_attr         = $is_rtl ? 'rtl' : 'ltr';
 
-		// Prepare active states ensuring STRICTLY ONE tab gets marked as active.
-		$active_index = -1;
-		foreach ( $items as $idx => $item ) {
-			if ( $this->is_item_active( $item ) ) {
-				$active_index = $idx;
-				break;
-			}
-		}
-
-		// If no tab matched and we are on front page, fallback to first item if it points to home.
-		if ( -1 === $active_index && ( is_front_page() || is_home() ) && ! empty( $items[0]['url'] ) ) {
-			$first_url = trailingslashit( strtok( (string) $items[0]['url'], '?' ) );
-			$home_url  = trailingslashit( home_url( '/' ) );
-			if ( $first_url === $home_url ) {
-				$active_index = 0;
-			}
-		}
-
-		$wrapper_classes = array(
-			'ntv-glass-nav-container',
-			'ntv-desktop-' . sanitize_html_class( $desktop_position ),
-			'ntv-width-' . sanitize_html_class( $width_mode ),
-		);
-
-		if ( ! empty( $settings['enable_overscroll_none'] ) ) {
-			$wrapper_classes[] = 'ntv-overscroll-none';
-		}
-
-		if ( ! empty( $settings['disable_ui_select'] ) ) {
-			$wrapper_classes[] = 'ntv-no-select';
-		}
-
 		// Bubble Menu ("More" hamburger submenu).
 		$enable_more_menu = ! empty( $settings['enable_more_menu'] );
 		$more_title       = ! empty( $settings['more_menu_title'] ) ? $settings['more_menu_title'] : __( 'More', 'nativly' );
@@ -505,6 +483,54 @@ class NTV_Navbar {
 				$more_items[] = $b_item;
 			}
 		}
+
+		// Priority Check: Does any bubble submenu item match the current page?
+		$active_bubble_index = -1;
+		if ( $enable_more_menu && ! empty( $more_items ) ) {
+			foreach ( $more_items as $b_idx => $b_item ) {
+				if ( $this->is_item_active( $b_item ) ) {
+					$active_bubble_index = $b_idx;
+					break;
+				}
+			}
+		}
+
+		// Prepare active states ensuring STRICTLY ONE tab gets marked as active.
+		$active_index   = -1;
+		$is_more_active = ( -1 !== $active_bubble_index );
+
+		// If a bubble item is active, "More" is active and NO main item can be active.
+		if ( ! $is_more_active ) {
+			foreach ( $items as $idx => $item ) {
+				if ( $this->is_item_active( $item ) ) {
+					$active_index = $idx;
+					break;
+				}
+			}
+
+			// If no tab matched and we are on front page, fallback to first item if it points to home.
+			if ( -1 === $active_index && ( is_front_page() || is_home() ) && ! empty( $items[0]['url'] ) ) {
+				$first_url = trailingslashit( strtok( (string) $items[0]['url'], '?' ) );
+				$home_url  = trailingslashit( home_url( '/' ) );
+				if ( $first_url === $home_url ) {
+					$active_index = 0;
+				}
+			}
+		}
+
+		$wrapper_classes = array(
+			'ntv-glass-nav-container',
+			'ntv-desktop-' . sanitize_html_class( $desktop_position ),
+			'ntv-width-' . sanitize_html_class( $width_mode ),
+		);
+
+		if ( ! empty( $settings['enable_overscroll_none'] ) ) {
+			$wrapper_classes[] = 'ntv-overscroll-none';
+		}
+
+		if ( ! empty( $settings['disable_ui_select'] ) ) {
+			$wrapper_classes[] = 'ntv-no-select';
+		}
 		?>
 		<!-- Nativly Expanding Glassmorphic Navbar -->
 		<div id="ntv-navbar-root" class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" dir="<?php echo esc_attr( $dir_attr ); ?>">
@@ -515,6 +541,11 @@ class NTV_Navbar {
 						<div class="ntv-bubble-grid">
 							<?php
 							foreach ( $more_items as $b_idx => $b_item ) :
+								$b_is_active = ( $b_idx === $active_bubble_index );
+								$b_classes   = array( 'ntv-bubble-item' );
+								if ( $b_is_active ) {
+									$b_classes[] = 'is-active';
+								}
 								$b_title = ! empty( $b_item['title'] ) ? $b_item['title'] : '';
 								$b_url   = ! empty( $b_item['url'] ) ? $b_item['url'] : '#';
 								$b_icon  = ! empty( $b_item['icon'] ) ? $b_item['icon'] : 'compass';
@@ -525,7 +556,7 @@ class NTV_Navbar {
 									$b_svg = NTV_Icons::get_icon_svg( 'compass' );
 								}
 								?>
-								<a href="<?php echo esc_url( $b_url ); ?>" class="ntv-bubble-item" title="<?php echo esc_attr( $b_title ); ?>">
+								<a href="<?php echo esc_url( $b_url ); ?>" class="<?php echo esc_attr( implode( ' ', $b_classes ) ); ?>" title="<?php echo esc_attr( $b_title ); ?>">
 									<span class="ntv-bubble-item-icon" aria-hidden="true">
 										<?php echo $b_svg; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 									</span>
@@ -552,7 +583,7 @@ class NTV_Navbar {
 						$badge_type = isset( $item['badge_type'] ) ? $item['badge_type'] : 'none';
 						$badge_text = isset( $item['badge_text'] ) ? $item['badge_text'] : '';
 
-						// Retrieve SVG Icon.
+						// Retrieve SVG or custom icon.
 						$icon_markup = '';
 						if ( isset( $item['icon_type'] ) && 'custom' === $item['icon_type'] && ! empty( $item['custom_svg'] ) ) {
 							$icon_markup = NTV_Icons::get_icon_svg( $item['custom_svg'] );
@@ -589,8 +620,14 @@ class NTV_Navbar {
 					<?php endforeach; ?>
 
 					<?php if ( $enable_more_menu && ! empty( $more_items ) ) : ?>
+						<?php
+						$more_btn_classes = array( 'ntv-nav-item', 'ntv-more-trigger' );
+						if ( $is_more_active ) {
+							$more_btn_classes[] = 'is-active';
+						}
+						?>
 						<button type="button"
-						        class="ntv-nav-item ntv-more-trigger"
+						        class="<?php echo esc_attr( implode( ' ', $more_btn_classes ) ); ?>"
 						        id="ntv-more-trigger"
 						        aria-haspopup="true"
 						        aria-expanded="false"
