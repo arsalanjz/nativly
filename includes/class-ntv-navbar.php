@@ -49,6 +49,7 @@ class NTV_Navbar {
 	 */
 	private function init_hooks() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'wp_body_open', array( $this, 'render_navbar' ), 5 );
 		add_action( 'wp_footer', array( $this, 'render_navbar' ), 90 );
 		add_filter( 'script_loader_tag', array( $this, 'add_no_optimize_attributes' ), 10, 2 );
 	}
@@ -305,6 +306,7 @@ class NTV_Navbar {
 			$raw_items = isset( $settings['menu_items'] ) && is_array( $settings['menu_items'] ) ? $settings['menu_items'] : array();
 		}
 
+		$hide_cart = ! empty( $settings['hide_cart_for_guests'] ) && ! $is_logged_in;
 		$display_items = array();
 
 		foreach ( $raw_items as $item ) {
@@ -313,7 +315,7 @@ class NTV_Navbar {
 			if ( 'logged_in' === $visibility && ! $is_logged_in ) {
 				continue;
 			}
-			if ( 'guests' === $visibility && $is_logged_in ) {
+			if ( ( 'guests' === $visibility || 'logged_out' === $visibility ) && $is_logged_in ) {
 				continue;
 			}
 			if ( 'roles' === $visibility ) {
@@ -322,6 +324,30 @@ class NTV_Navbar {
 				}
 				$allowed_roles = isset( $item['roles'] ) && is_array( $item['roles'] ) ? $item['roles'] : array();
 				if ( ! empty( $allowed_roles ) && ! array_intersect( $user_roles, $allowed_roles ) ) {
+					continue;
+				}
+			}
+
+			// Automatic cart tab hiding for guests if option is enabled.
+			if ( $hide_cart ) {
+				$badge_type = isset( $item['badge_type'] ) ? $item['badge_type'] : '';
+				$item_url   = isset( $item['url'] ) ? strtolower( (string) $item['url'] ) : '';
+				$is_cart    = ( 'wc_cart_count' === $badge_type || 'cart' === $badge_type );
+
+				if ( ! $is_cart && class_exists( 'WooCommerce' ) && function_exists( 'wc_get_page_permalink' ) ) {
+					$cart_permalink = wc_get_page_permalink( 'cart' );
+					if ( $cart_permalink ) {
+						$cart_path = trailingslashit( strtolower( (string) wp_parse_url( $cart_permalink, PHP_URL_PATH ) ) );
+						$cur_path  = trailingslashit( strtolower( (string) wp_parse_url( $item_url, PHP_URL_PATH ) ) );
+						if ( ! empty( $cart_path ) && $cart_path === $cur_path ) {
+							$is_cart = true;
+						}
+					}
+				}
+				if ( ! $is_cart && ( false !== strpos( $item_url, '/cart' ) || false !== strpos( $item_url, 'cart' ) ) ) {
+					$is_cart = true;
+				}
+				if ( $is_cart ) {
 					continue;
 				}
 			}
@@ -448,6 +474,11 @@ class NTV_Navbar {
 	 * @return void
 	 */
 	public function render_navbar() {
+		static $rendered = false;
+		if ( $rendered ) {
+			return;
+		}
+
 		if ( ! $this->should_display() ) {
 			return;
 		}
@@ -456,6 +487,8 @@ class NTV_Navbar {
 		if ( empty( $items ) ) {
 			return;
 		}
+
+		$rendered = true;
 
 		$settings         = NTV_Core::get_settings();
 		$desktop_position = isset( $settings['desktop_position'] ) ? $settings['desktop_position'] : 'hidden';
@@ -470,6 +503,7 @@ class NTV_Navbar {
 		$more_items_raw   = ! empty( $settings['more_menu_items'] ) && is_array( $settings['more_menu_items'] ) ? $settings['more_menu_items'] : array();
 
 		$is_logged_in = is_user_logged_in();
+		$hide_cart    = ! empty( $settings['hide_cart_for_guests'] ) && ! $is_logged_in;
 		$more_items   = array();
 		if ( $enable_more_menu ) {
 			foreach ( $more_items_raw as $b_item ) {
@@ -477,8 +511,15 @@ class NTV_Navbar {
 				if ( 'logged_in' === $b_visibility && ! $is_logged_in ) {
 					continue;
 				}
-				if ( 'guests' === $b_visibility && $is_logged_in ) {
+				if ( ( 'guests' === $b_visibility || 'logged_out' === $b_visibility ) && $is_logged_in ) {
 					continue;
+				}
+				if ( $hide_cart ) {
+					$b_url   = isset( $b_item['url'] ) ? strtolower( (string) $b_item['url'] ) : '';
+					$is_cart = ( false !== strpos( $b_url, '/cart' ) || false !== strpos( $b_url, 'cart' ) );
+					if ( $is_cart ) {
+						continue;
+					}
 				}
 				$more_items[] = $b_item;
 			}
@@ -531,9 +572,23 @@ class NTV_Navbar {
 		if ( ! empty( $settings['disable_ui_select'] ) ) {
 			$wrapper_classes[] = 'ntv-no-select';
 		}
+		$bottom_offset = isset( $settings['mobile_bottom_offset'] ) ? (int) $settings['mobile_bottom_offset'] : 16;
 		?>
+		<!-- Nativly Critical Inline Layout CSS -->
+		<style id="ntv-critical-inline-css" data-no-optimize="1" data-ls-no-optm="1">
+			.ntv-glass-nav-container {
+				position: fixed !important;
+				bottom: <?php echo esc_attr( (string) $bottom_offset ); ?>px !important;
+				left: 50% !important;
+				transform: translateX(-50%) !important;
+				z-index: 2147483647 !important;
+				display: flex !important;
+				opacity: 1 !important;
+				visibility: visible !important;
+			}
+		</style>
 		<!-- Nativly Expanding Glassmorphic Navbar -->
-		<div id="ntv-navbar-root" class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" dir="<?php echo esc_attr( $dir_attr ); ?>">
+		<div id="ntv-navbar-root" class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" dir="<?php echo esc_attr( $dir_attr ); ?>" data-no-optimize="1" data-no-lazy="1">
 			<?php if ( $enable_more_menu && ! empty( $more_items ) ) : ?>
 				<!-- Liquid Glass Bubble Popover Submenu -->
 				<div id="ntv-glass-bubble-popover" class="ntv-bubble-popover" role="dialog" aria-modal="false" aria-hidden="true" style="display:none;">
@@ -568,7 +623,7 @@ class NTV_Navbar {
 				</div>
 			<?php endif; ?>
 
-			<nav class="ntv-glass-nav" aria-label="<?php esc_attr_e( 'Main Mobile Navigation', 'nativly' ); ?>" role="navigation">
+			<nav id="ntv-glass-navbar" class="ntv-glass-nav" aria-label="<?php esc_attr_e( 'Main Mobile Navigation', 'nativly' ); ?>" role="navigation" data-no-optimize="1" data-no-lazy="1">
 				<div class="ntv-nav-list" role="menubar">
 					<?php
 					foreach ( $items as $idx => $item ) :

@@ -370,19 +370,20 @@ class NTV_Core {
 			}
 		}
 
-		// Admin & Diagnostics Components (Phase 4).
+		// Diagnostics & Cache Optimization Rules (loaded globally for cache plugin exclusions).
+		if ( file_exists( NTV_PATH . 'includes/class-ntv-diagnostics.php' ) ) {
+			require_once NTV_PATH . 'includes/class-ntv-diagnostics.php';
+			if ( class_exists( 'NTV_Diagnostics' ) && method_exists( 'NTV_Diagnostics', 'get_instance' ) ) {
+				NTV_Diagnostics::get_instance();
+			}
+		}
+
+		// Admin Settings Component (Phase 4).
 		if ( is_admin() ) {
 			if ( file_exists( NTV_PATH . 'includes/class-ntv-settings.php' ) ) {
 				require_once NTV_PATH . 'includes/class-ntv-settings.php';
 				if ( class_exists( 'NTV_Settings' ) && method_exists( 'NTV_Settings', 'get_instance' ) ) {
 					NTV_Settings::get_instance();
-				}
-			}
-
-			if ( file_exists( NTV_PATH . 'includes/class-ntv-diagnostics.php' ) ) {
-				require_once NTV_PATH . 'includes/class-ntv-diagnostics.php';
-				if ( class_exists( 'NTV_Diagnostics' ) && method_exists( 'NTV_Diagnostics', 'get_instance' ) ) {
-					NTV_Diagnostics::get_instance();
 				}
 			}
 

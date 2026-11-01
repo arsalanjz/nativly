@@ -224,7 +224,36 @@
       });
     }
 
-    // Palette Swatch Click Handler
+    // Palette Swatch Click Handler (Global & Inline)
+    $(document).on('click', '.ntv-inline-swatch', function (e) {
+      e.preventDefault();
+      const color = $(this).data('color');
+      if (!color) return;
+
+      const row = $(this).closest('.ntv-color-row-inline');
+      const targetPicker = row.find('.ntv-color-picker');
+
+      if (targetPicker && targetPicker.length) {
+        if (targetPicker.hasClass('ntv-rgba-base-color')) {
+          const slider = row.find('.ntv-opacity-slider');
+          const hiddenTarget = row.find('input[type="hidden"]');
+          targetPicker.val(color);
+          if (targetPicker.wpColorPicker) {
+            targetPicker.wpColorPicker('color', color);
+          }
+          const op = slider.length ? slider.val() : 100;
+          const rgba = hexToRgba(color, op);
+          hiddenTarget.val(rgba);
+        } else {
+          targetPicker.val(color);
+          if (targetPicker.wpColorPicker) {
+            targetPicker.wpColorPicker('color', color);
+          }
+        }
+        updateLivePreview();
+      }
+    });
+
     $('.ntv-palette-swatch').on('click', function (e) {
       e.preventDefault();
       const color = $(this).data('color');

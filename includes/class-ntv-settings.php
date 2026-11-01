@@ -182,9 +182,24 @@ class NTV_Settings {
 		// Filter null/empty, uppercase, and make unique.
 		$palette = array_values( array_unique( array_filter( array_map( 'strtoupper', $palette ) ) ) );
 
-		// Fallback curated palette if none detected.
+		// Skip pure neutrals/whites/grays when selecting accent colors.
+		$neutrals = array( '#FFFFFF', '#FFF', '#000000', '#000', '#F8F9FA', '#F9FAFB', '#F3F4F6', '#EEEEEE', '#E5E7EB', '#121218', '#0F172A', '#1E293B', '#111827' );
+		$accent_colors = array();
+		foreach ( $palette as $c ) {
+			if ( ! in_array( $c, $neutrals, true ) ) {
+				$accent_colors[] = $c;
+			}
+		}
+		if ( ! empty( $accent_colors ) ) {
+			$palette = $accent_colors;
+		}
+
+		// Limit to exactly 4 primary/accent colors.
+		$palette = array_slice( $palette, 0, 4 );
+
+		// Fallback curated 4 primary/accent colors if none detected.
 		if ( empty( $palette ) ) {
-			$palette = array( '#0047FF', '#6366F1', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#1E293B', '#FFFFFF' );
+			$palette = array( '#0047FF', '#6366F1', '#10B981', '#F59E0B' );
 		}
 
 		return $palette;
@@ -482,6 +497,7 @@ class NTV_Settings {
 		$clean['excluded_urls']        = ! empty( $input['excluded_urls'] ) ? sanitize_textarea_field( $input['excluded_urls'] ) : '';
 		$clean['exclude_on_cart']      = ! empty( $input['exclude_on_cart'] ) ? 1 : 0;
 		$clean['exclude_on_checkout']  = ! empty( $input['exclude_on_checkout'] ) ? 1 : 0;
+		$clean['hide_cart_for_guests'] = ! empty( $input['hide_cart_for_guests'] ) ? 1 : 0;
 		$clean['user_visibility']      = in_array( $input['user_visibility'] ?? '', array( 'all', 'logged_in', 'guests', 'roles' ), true ) ? $input['user_visibility'] : 'all';
 		$clean['allowed_roles']        = isset( $input['allowed_roles'] ) && is_array( $input['allowed_roles'] ) ? array_map( 'sanitize_key', $input['allowed_roles'] ) : array();
 
@@ -587,7 +603,7 @@ class NTV_Settings {
 					</div>
 					<div>
 						<h1 class="ntv-admin-title">Nativly</h1>
-						<p class="ntv-admin-tagline"><?php esc_html_e( 'تبدیل وردپرس به اپلیکیشن بومی با نوبار گسترش‌پذیر شیشه‌ای و PWA', 'nativly' ); ?> <span class="ntv-version-tag">v<?php echo esc_html( NTV_VERSION ); ?></span> <span class="ntv-version-tag" id="ntv-cache-version-badge">ntv-v<?php echo esc_html( get_option( 'ntv_cache_version', 1 ) ); ?></span></p>
+						<p class="ntv-admin-tagline"><?php esc_html_e( 'تبدیل وردپرس به اپلیکیشن بومی با نوبار گسترش‌پذیر شیشه‌ای و PWA', 'nativly' ); ?> <span class="ntv-version-tag">v<?php echo esc_html( NTV_VERSION ); ?></span></p>
 					</div>
 				</div>
 				<div class="ntv-header-actions">
@@ -735,23 +751,6 @@ class NTV_Settings {
 
 						<!-- Tab 2: Glass Styling & Presets -->
 						<div id="ntv-tab-styling" class="ntv-tab-content <?php echo 'styling' === $active_tab ? 'is-active' : ''; ?>">
-							<!-- Global Site Color Palette Swatches -->
-							<div class="ntv-palette-swatches-wrap">
-								<h4 class="ntv-palette-swatches-title">
-									<span class="dashicons dashicons-art"></span>
-									<?php esc_html_e( 'رنگ‌های سراسری قالب شما', 'nativly' ); ?>
-								</h4>
-								<p class="ntv-palette-swatches-hint"><?php esc_html_e( 'با کلیک روی هر رنگ، کد رنگ مستقیماً در فیلد فعال جایگذاری می‌شود:', 'nativly' ); ?></p>
-								<div class="ntv-palette-swatches">
-									<?php
-									$site_palette = self::get_site_palette();
-									foreach ( $site_palette as $hex_color ) :
-										?>
-										<button type="button" class="ntv-palette-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
-									<?php endforeach; ?>
-								</div>
-							</div>
-
 							<div class="ntv-card">
 								<h3 class="ntv-card-title"><?php esc_html_e( 'پالت‌ها و پریست‌های آماده', 'nativly' ); ?></h3>
 								<p class="ntv-card-subtitle"><?php esc_html_e( 'یکی از پریست‌های استاندارد را انتخاب کنید یا رنگ‌ها را مطابق سلیقه خود تغییر دهید:', 'nativly' ); ?></p>
@@ -780,60 +779,110 @@ class NTV_Settings {
 								<input type="hidden" name="ntv_settings[active_preset]" id="ntv-active-preset-input" value="<?php echo esc_attr( $settings['active_preset'] ); ?>">
 							</div>
 
-							<!-- Color Pickers Card -->
+							<!-- Color Pickers Card (Single Clean Horizontal Rows) -->
 							<div class="ntv-card ntv-mt-4">
 								<h3 class="ntv-card-title"><?php esc_html_e( 'تنظیمات رنگ و شفافیت کپسول شیشه‌ای', 'nativly' ); ?></h3>
-								<div class="ntv-grid-3">
-									<div class="ntv-field-group">
-										<label><?php esc_html_e( 'رنگ پس‌زمینه کپسول فعال:', 'nativly' ); ?></label>
-										<input type="text" name="ntv_settings[active_pill_bg]" id="ntv-active-pill-bg" value="<?php echo esc_attr( $settings['active_pill_bg'] ); ?>" class="ntv-color-picker">
-									</div>
-									<div class="ntv-field-group">
-										<label><?php esc_html_e( 'رنگ متن و آیکون کپسول فعال:', 'nativly' ); ?></label>
-										<input type="text" name="ntv_settings[active_text_color]" id="ntv-active-text-color" value="<?php echo esc_attr( $settings['active_text_color'] ); ?>" class="ntv-color-picker">
-									</div>
-									<?php
-									$parsed_inactive = self::parse_color_and_opacity( $settings['inactive_icon_color'], '#FFFFFF', 70 );
-									?>
-									<div class="ntv-field-group ntv-color-with-opacity" data-target="ntv-inactive-icon-color">
-										<label><?php esc_html_e( 'رنگ آیکون‌های غیرفعال:', 'nativly' ); ?></label>
-										<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_inactive['hex'] ); ?>" data-default-color="#FFFFFF">
-										<div class="ntv-opacity-slider-row ntv-mt-2">
-											<label><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></label>
-											<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_inactive['opacity'] ); ?>">
-											<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_inactive['opacity'] ); ?>%</span>
-										</div>
-										<input type="hidden" name="ntv_settings[inactive_icon_color]" id="ntv-inactive-icon-color" value="<?php echo esc_attr( $settings['inactive_icon_color'] ); ?>">
-									</div>
-								</div>
+								<p class="ntv-card-subtitle"><?php esc_html_e( 'تنظیم رنگ‌های اختصاصی برای کپسول فعال، آیکون‌ها و شیشه زمینه. با کلیک روی رنگ‌های سراسری قالب (سمت چپ هر ردیف) کد رنگ فوراً اعمال می‌شود:', 'nativly' ); ?></p>
 
-								<div class="ntv-grid-2 ntv-mt-3">
-									<?php
-									$parsed_bg = self::parse_color_and_opacity( $settings['glass_bg_color'], '#121218', 82 );
-									?>
-									<div class="ntv-field-group ntv-color-with-opacity" data-target="ntv-glass-bg-color">
-										<label><?php esc_html_e( 'رنگ و شفافیت شیشه نوبار (Glass Background):', 'nativly' ); ?></label>
-										<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_bg['hex'] ); ?>" data-default-color="#121218">
-										<div class="ntv-opacity-slider-row ntv-mt-2">
-											<label><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></label>
-											<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_bg['opacity'] ); ?>">
-											<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_bg['opacity'] ); ?>%</span>
+								<?php
+								$site_palette    = self::get_site_palette();
+								$parsed_inactive = self::parse_color_and_opacity( $settings['inactive_icon_color'], '#FFFFFF', 70 );
+								$parsed_bg       = self::parse_color_and_opacity( $settings['glass_bg_color'], '#121218', 82 );
+								$parsed_border   = self::parse_color_and_opacity( $settings['glass_border_color'], '#FFFFFF', 12 );
+								?>
+
+								<div class="ntv-color-rows-wrap">
+									<!-- Row 1: Active Pill Background -->
+									<div class="ntv-color-row-inline" data-target="ntv-active-pill-bg">
+										<div class="ntv-color-row-label">
+											<label for="ntv-active-pill-bg"><?php esc_html_e( 'رنگ پس‌زمینه کپسول فعال:', 'nativly' ); ?></label>
 										</div>
-										<input type="hidden" name="ntv_settings[glass_bg_color]" id="ntv-glass-bg-color" value="<?php echo esc_attr( $settings['glass_bg_color'] ); ?>">
+										<div class="ntv-color-row-controls">
+											<input type="text" name="ntv_settings[active_pill_bg]" id="ntv-active-pill-bg" value="<?php echo esc_attr( $settings['active_pill_bg'] ); ?>" class="ntv-color-picker" data-default-color="#0047FF">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php foreach ( $site_palette as $hex_color ) : ?>
+												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php endforeach; ?>
+										</div>
 									</div>
 
-									<?php
-									$parsed_border = self::parse_color_and_opacity( $settings['glass_border_color'], '#FFFFFF', 12 );
-									?>
-									<div class="ntv-field-group ntv-color-with-opacity" data-target="ntv-glass-border-color">
-										<label><?php esc_html_e( 'رنگ بوردر شیشه‌ای (Glass Border):', 'nativly' ); ?></label>
-										<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_border['hex'] ); ?>" data-default-color="#FFFFFF">
-										<div class="ntv-opacity-slider-row ntv-mt-2">
-											<label><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></label>
-											<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_border['opacity'] ); ?>">
-											<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_border['opacity'] ); ?>%</span>
+									<!-- Row 2: Active Text & Icon -->
+									<div class="ntv-color-row-inline" data-target="ntv-active-text-color">
+										<div class="ntv-color-row-label">
+											<label for="ntv-active-text-color"><?php esc_html_e( 'رنگ متن و آیکون کپسول فعال:', 'nativly' ); ?></label>
 										</div>
-										<input type="hidden" name="ntv_settings[glass_border_color]" id="ntv-glass-border-color" value="<?php echo esc_attr( $settings['glass_border_color'] ); ?>">
+										<div class="ntv-color-row-controls">
+											<input type="text" name="ntv_settings[active_text_color]" id="ntv-active-text-color" value="<?php echo esc_attr( $settings['active_text_color'] ); ?>" class="ntv-color-picker" data-default-color="#FFFFFF">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php foreach ( $site_palette as $hex_color ) : ?>
+												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php endforeach; ?>
+										</div>
+									</div>
+
+									<!-- Row 3: Inactive Icon Color -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-inactive-icon-color">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ آیکون‌های غیرفعال:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_inactive['hex'] ); ?>" data-default-color="#FFFFFF">
+											<div class="ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_inactive['opacity'] ); ?>">
+												<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_inactive['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[inactive_icon_color]" id="ntv-inactive-icon-color" value="<?php echo esc_attr( $settings['inactive_icon_color'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php foreach ( $site_palette as $hex_color ) : ?>
+												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php endforeach; ?>
+										</div>
+									</div>
+
+									<!-- Row 4: Glass Background -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-glass-bg-color">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ و شفافیت شیشه نوبار:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_bg['hex'] ); ?>" data-default-color="#121218">
+											<div class="ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_bg['opacity'] ); ?>">
+												<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_bg['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[glass_bg_color]" id="ntv-glass-bg-color" value="<?php echo esc_attr( $settings['glass_bg_color'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php foreach ( $site_palette as $hex_color ) : ?>
+												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php endforeach; ?>
+										</div>
+									</div>
+
+									<!-- Row 5: Glass Border -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-glass-border-color">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ بوردر شیشه‌ای (Border):', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_border['hex'] ); ?>" data-default-color="#FFFFFF">
+											<div class="ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_border['opacity'] ); ?>">
+												<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_border['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[glass_border_color]" id="ntv-glass-border-color" value="<?php echo esc_attr( $settings['glass_border_color'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php foreach ( $site_palette as $hex_color ) : ?>
+												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php endforeach; ?>
+										</div>
 									</div>
 								</div>
 
@@ -980,6 +1029,11 @@ class NTV_Settings {
 										<input type="checkbox" name="ntv_settings[exclude_on_checkout]" value="1" <?php checked( ! empty( $settings['exclude_on_checkout'] ) ); ?>>
 										<span><?php esc_html_e( 'مخفی‌سازی نوبار در برگه تسویه‌حساب ووکامرس (بهبود نرخ تبدیل)', 'nativly' ); ?></span>
 									</label>
+
+									<label class="ntv-switch-label">
+										<input type="checkbox" name="ntv_settings[hide_cart_for_guests]" value="1" <?php checked( ! empty( $settings['hide_cart_for_guests'] ) ); ?>>
+										<span><?php esc_html_e( 'مخفی‌سازی تب سبد خرید برای کاربران واردنشده (مهمان)', 'nativly' ); ?></span>
+									</label>
 								</div>
 
 								<!-- Excluded URLs Textarea -->
@@ -1085,28 +1139,14 @@ class NTV_Settings {
 							</div>
 						</div>
 
-						<!-- Prominent Sticky Bottom Save Bar (Inside Settings Form) -->
-						<div class="ntv-form-footer-sticky">
-							<div class="ntv-footer-sticky-info">
-								<span class="dashicons dashicons-saved"></span>
-								<span class="ntv-save-status-hint"><?php esc_html_e( 'تغییرات شما پس از ذخیره، فوراً در پیش‌نمایش زنده و سایت اعمال خواهند شد.', 'nativly' ); ?></span>
-							</div>
-							<button type="submit" class="button button-primary ntv-btn-primary button-hero ntv-save-submit-btn">
-								<span class="dashicons dashicons-saved"></span>
-								<?php esc_html_e( 'ذخیره تغییرات (Save Settings)', 'nativly' ); ?>
-							</button>
-						</div>
-					</form>
-
-					<!-- Tab 5: Tools & Cache (Standalone, Clean Forms Without Nesting) -->
+					<!-- Tab 5: Tools & Cache -->
 					<div id="ntv-tab-tools" class="ntv-tab-content <?php echo 'tools' === $active_tab ? 'is-active' : ''; ?>">
 						<div class="ntv-card">
 							<h3 class="ntv-card-title"><?php esc_html_e( 'مدیریت و پاک‌سازی کش PWA', 'nativly' ); ?></h3>
 							<p class="ntv-card-subtitle"><?php esc_html_e( 'در صورتی که تغییری در صفحات یا کدهای سایت ایجاد کرده‌اید، با این دکمه کش سرویس‌ورکر کلاینت‌ها را فورس‌آپدیت کنید:', 'nativly' ); ?></p>
-							<button type="button" id="ntv-tools-purge-btn" class="button button-secondary ntv-btn-action">
-								<span class="dashicons dashicons-update"></span> <?php esc_html_e( 'پاک‌سازی فوری کش PWA', 'nativly' ); ?>
+							<button type="button" id="ntv-tools-purge-btn" class="ntv-btn ntv-btn-primary">
+								<span class="dashicons dashicons-update"></span> <?php esc_html_e( 'پاک‌سازی فوری کش PWA و لایت‌استپید', 'nativly' ); ?>
 							</button>
-							<p class="ntv-hint ntv-mt-2"><?php esc_html_e( 'نسخه کش فعلی:', 'nativly' ); ?> <code id="ntv-tools-cache-version">ntv-v<?php echo esc_html( get_option( 'ntv_cache_version', 1 ) ); ?></code></p>
 						</div>
 
 						<div class="ntv-card ntv-mt-4">
@@ -1122,13 +1162,12 @@ class NTV_Settings {
 								<div>
 									<h4><?php esc_html_e( 'درون‌ریزی تنظیمات', 'nativly' ); ?></h4>
 									<p class="ntv-hint"><?php esc_html_e( 'بارگذاری فایل تنظیمات JSON از پیش ذخیره شده.', 'nativly' ); ?></p>
-									<form method="post" enctype="multipart/form-data" action="" id="ntv-standalone-import-form">
-										<?php wp_nonce_field( 'ntv_import_action', 'ntv_import_nonce' ); ?>
-										<input type="file" name="ntv_import_file" accept=".json" required>
-										<button type="submit" name="ntv_import_settings_submit" class="button button-secondary ntv-mt-2">
+									<div class="ntv-import-fields-wrap">
+										<input type="file" name="ntv_import_file" id="ntv-import-file-input" accept=".json" form="ntv-standalone-import-form" required>
+										<button type="submit" name="ntv_import_settings_submit" form="ntv-standalone-import-form" class="button button-secondary ntv-mt-2">
 											<span class="dashicons dashicons-upload"></span> <?php esc_html_e( 'درون‌ریزی فایل', 'nativly' ); ?>
 										</button>
-									</form>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -1150,7 +1189,25 @@ class NTV_Settings {
 						}
 						?>
 					</div>
-				</div>
+
+					<!-- Prominent Sticky Bottom Save Bar (Inside Settings Form) -->
+					<div class="ntv-form-footer-sticky">
+						<div class="ntv-footer-sticky-info">
+							<span class="dashicons dashicons-saved"></span>
+							<span class="ntv-save-status-hint"><?php esc_html_e( 'تغییرات شما پس از ذخیره، فوراً در پیش‌نمایش زنده و سایت اعمال خواهند شد.', 'nativly' ); ?></span>
+						</div>
+						<button type="submit" class="button button-primary ntv-btn-primary button-hero ntv-save-submit-btn">
+							<span class="dashicons dashicons-saved"></span>
+							<?php esc_html_e( 'ذخیره تغییرات', 'nativly' ); ?>
+						</button>
+					</div>
+				</form>
+
+				<!-- Standalone JSON Import Form (outside main settings form) -->
+				<form id="ntv-standalone-import-form" method="post" enctype="multipart/form-data" action="" style="display:none;">
+					<?php wp_nonce_field( 'ntv_import_action', 'ntv_import_nonce' ); ?>
+				</form>
+			</div>
 
 				<!-- Live Interactive Mobile Preview Column -->
 				<div class="ntv-preview-col">
@@ -1179,7 +1236,7 @@ class NTV_Settings {
 								</div>
 
 								<!-- Live Expanding Navbar Inside Phone Mockup -->
-								<div id="ntv-preview-nav-root" class="ntv-mockup-nav-container">
+								<div id="ntv-preview-nav-root" class="ntv-mockup-nav-container ntv-glass-nav-container">
 									<!-- Bubble Popover in Mockup -->
 									<div id="ntv-mockup-bubble" class="ntv-bubble-popover ntv-mockup-bubble-popover" style="display:none;" aria-hidden="true">
 										<div class="ntv-bubble-glass-card">

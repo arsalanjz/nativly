@@ -213,6 +213,7 @@ class NTV_Activator {
 			'excluded_urls'             => '',
 			'exclude_on_cart'           => 0,
 			'exclude_on_checkout'       => 0,
+			'hide_cart_for_guests'     => 0,
 			'user_visibility'           => 'all',
 			'allowed_roles'             => array(),
 

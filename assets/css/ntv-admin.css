@@ -1213,3 +1213,375 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* ==========================================================================
+   Phase 8: Final Fixes & Polish
+   ========================================================================== */
+
+/* Phone Mockup Scoped Rules to Prevent Navbar Overflow */
+.ntv-phone-screen .ntv-mockup-nav-container,
+.ntv-phone-screen .ntv-glass-nav-container {
+  max-width: calc(100% - 20px) !important;
+  width: calc(100% - 20px) !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  justify-content: space-between !important;
+  padding: 6px 8px !important;
+  gap: 2px !important;
+}
+
+.ntv-phone-screen .ntv-glass-nav {
+  max-width: calc(100% - 20px) !important;
+  width: calc(100% - 20px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  justify-content: space-between !important;
+  padding: 6px 8px !important;
+  gap: 2px !important;
+  border-radius: 999px !important;
+}
+
+.ntv-phone-screen .ntv-nav-list {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 2px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.ntv-phone-screen .ntv-nav-item {
+  padding: 6px 8px !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  flex: 0 1 auto !important;
+  box-sizing: border-box !important;
+}
+
+.ntv-phone-screen .ntv-nav-label {
+  font-size: 11px !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+.ntv-phone-screen .ntv-nav-item .ntv-icon-wrap {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+}
+
+.ntv-phone-screen .ntv-nav-item .ntv-icon-wrap svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Redesigned Tab 2 Color Controls (Single Clean Horizontal Rows) */
+.ntv-color-rows-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ntv-color-row-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.ntv-color-row-inline:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.ntv-color-row-label {
+  flex: 0 0 210px;
+  max-width: 230px;
+}
+
+.ntv-color-row-label label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1E293B;
+  cursor: pointer;
+}
+
+.ntv-color-row-controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ntv-color-row-controls .wp-picker-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ntv-opacity-slider-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.ntv-opacity-slider-inline .ntv-opacity-slider-title {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ntv-opacity-slider-inline .ntv-opacity-slider {
+  width: 90px;
+  accent-color: #0047FF;
+  cursor: pointer;
+}
+
+.ntv-opacity-slider-inline .ntv-opacity-val {
+  min-width: 34px;
+  font-weight: 700;
+  color: #0047FF;
+  font-size: 12px;
+  text-align: end;
+}
+
+.ntv-color-row-swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ntv-inline-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 0 0 1px #CBD5E1, 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.ntv-inline-swatch:hover {
+  transform: scale(1.22);
+  box-shadow: 0 0 0 2px #0047FF, 0 2px 6px rgba(0, 71, 255, 0.35);
+  z-index: 2;
+}
+
+/* Tab 5 Tools Purge Button */
+#ntv-tools-purge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#ntv-tools-purge-btn .dashicons {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
+/* Tab 6 Diagnostics Cards & System Report */
+.ntv-diag-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ntv-diag-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  border-inline-start: 4px solid #10B981;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ntv-diag-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ntv-diag-card.ntv-status-ok {
+  border-inline-start-color: #10B981;
+}
+
+.ntv-diag-card.ntv-status-ok .ntv-diag-icon {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.ntv-diag-card.ntv-status-ok .ntv-diag-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.ntv-diag-card.ntv-status-warning {
+  border-inline-start-color: #F59E0B;
+}
+
+.ntv-diag-card.ntv-status-warning .ntv-diag-icon {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+}
+
+.ntv-diag-card.ntv-status-warning .ntv-diag-badge {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+}
+
+.ntv-diag-card.ntv-status-error {
+  border-inline-start-color: #EF4444;
+}
+
+.ntv-diag-card.ntv-status-error .ntv-diag-icon {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+}
+
+.ntv-diag-card.ntv-status-error .ntv-diag-badge {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+}
+
+.ntv-diag-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ntv-diag-icon .dashicons {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.ntv-diag-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ntv-diag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ntv-diag-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.ntv-diag-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ntv-diag-message {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.ntv-diag-help-box {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px dashed #CBD5E1;
+  font-size: 11.5px;
+  color: #64748B;
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ntv-diag-help-box .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: #0047FF;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ntv-endpoint-item {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ntv-endpoint-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  text-decoration: none;
+  font-weight: 600;
+  color: #0047FF;
+}
+
+.ntv-endpoint-link:hover {
+  text-decoration: underline;
+}
+
+.ntv-system-report-box {
+  background: #0F172A;
+  color: #94A3B8;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+  padding: 16px;
+  border-radius: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  direction: ltr;
+  text-align: left;
+  border: 1px solid #1E293B;
+}
