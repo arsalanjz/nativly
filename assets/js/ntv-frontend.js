@@ -176,8 +176,10 @@
       badge.setAttribute('data-count', count);
       badge.textContent = text;
       if (count > 0) {
+        badge.classList.remove('is-empty');
         badge.style.display = 'inline-flex';
       } else {
+        badge.classList.add('is-empty');
         badge.style.display = 'none';
       }
     });

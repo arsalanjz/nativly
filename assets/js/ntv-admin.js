@@ -172,10 +172,15 @@
     if ($.fn.wpColorPicker) {
       // Normal color pickers
       $('.ntv-color-picker:not(.ntv-rgba-base-color)').wpColorPicker({
-        change: function () {
+        change: function (event, ui) {
+          if (ui && ui.color) {
+            $(this).val(ui.color.toString());
+          }
+          updateLivePreview();
           setTimeout(updateLivePreview, 50);
         },
         clear: function () {
+          updateLivePreview();
           setTimeout(updateLivePreview, 50);
         }
       });
@@ -251,6 +256,7 @@
           }
         }
         updateLivePreview();
+        setTimeout(updateLivePreview, 50);
       }
     });
 
@@ -291,24 +297,57 @@
   }
 
   /**
-   * Sliders (Blur & Border Radius & Offset)
+   * Sliders (Blur & Border Radius & Offset) with Percentage and Number Input Sync
    */
   function initSliders() {
+    // 1. Blur
     $('#ntv-glass-blur').on('input change', function () {
       const val = $(this).val();
-      $('#ntv-blur-val').text(val + 'px');
+      $('#ntv-glass-blur-num').val(val);
+      $('#ntv-blur-val').text(val + '%');
+      updateLivePreview();
+    });
+    $('#ntv-glass-blur-num').on('input change', function () {
+      let val = parseInt($(this).val(), 10);
+      if (isNaN(val)) val = 0;
+      if (val < 0) val = 0;
+      if (val > 100) val = 100;
+      $('#ntv-glass-blur').val(val);
+      $('#ntv-blur-val').text(val + '%');
       updateLivePreview();
     });
 
+    // 2. Border Radius
     $('#ntv-border-radius').on('input change', function () {
       const val = $(this).val();
-      $('#ntv-radius-val').text(val + 'px');
+      $('#ntv-border-radius-num').val(val);
+      $('#ntv-radius-val').text(val + '%');
+      updateLivePreview();
+    });
+    $('#ntv-border-radius-num').on('input change', function () {
+      let val = parseInt($(this).val(), 10);
+      if (isNaN(val)) val = 0;
+      if (val < 0) val = 0;
+      if (val > 100) val = 100;
+      $('#ntv-border-radius').val(val);
+      $('#ntv-radius-val').text(val + '%');
       updateLivePreview();
     });
 
+    // 3. Mobile Bottom Offset
     $('#ntv-mobile-bottom-offset').on('input change', function () {
       const val = $(this).val();
-      $('#ntv-offset-val').text(val + 'px');
+      $('#ntv-mobile-bottom-offset-num').val(val);
+      $('#ntv-offset-val').text(val + '%');
+      updateLivePreview();
+    });
+    $('#ntv-mobile-bottom-offset-num').on('input change', function () {
+      let val = parseInt($(this).val(), 10);
+      if (isNaN(val)) val = 0;
+      if (val < 0) val = 0;
+      if (val > 100) val = 100;
+      $('#ntv-mobile-bottom-offset').val(val);
+      $('#ntv-offset-val').text(val + '%');
       updateLivePreview();
     });
   }
@@ -324,8 +363,8 @@
         inactive_color: 'rgba(255, 255, 255, 0.7)',
         glass_bg: 'rgba(18, 18, 24, 0.82)',
         glass_border: 'rgba(255, 255, 255, 0.12)',
-        blur: 20,
-        radius: 999
+        blur: 50,
+        radius: 100
       },
       light_glass: {
         pill_bg: '#2563EB',
@@ -333,8 +372,8 @@
         inactive_color: 'rgba(15, 23, 42, 0.65)',
         glass_bg: 'rgba(255, 255, 255, 0.85)',
         glass_border: 'rgba(0, 0, 0, 0.08)',
-        blur: 24,
-        radius: 999
+        blur: 50,
+        radius: 100
       },
       cyber_emerald: {
         pill_bg: '#10B981',
@@ -342,8 +381,8 @@
         inactive_color: 'rgba(255, 255, 255, 0.7)',
         glass_bg: 'rgba(6, 30, 20, 0.84)',
         glass_border: 'rgba(16, 185, 129, 0.25)',
-        blur: 20,
-        radius: 999
+        blur: 50,
+        radius: 100
       },
       sunset_violet: {
         pill_bg: '#8B5CF6',
@@ -351,8 +390,8 @@
         inactive_color: 'rgba(255, 255, 255, 0.7)',
         glass_bg: 'rgba(28, 16, 45, 0.85)',
         glass_border: 'rgba(139, 92, 246, 0.25)',
-        blur: 22,
-        radius: 999
+        blur: 55,
+        radius: 100
       }
     };
 
@@ -402,10 +441,12 @@
       applyRgbaField('ntv-glass-border-color', p.glass_border || 'rgba(255, 255, 255, 0.12)', '#FFFFFF', 12);
 
       $('#ntv-glass-blur').val(p.blur);
-      $('#ntv-blur-val').text(p.blur + 'px');
+      $('#ntv-glass-blur-num').val(p.blur);
+      $('#ntv-blur-val').text(p.blur + '%');
 
       $('#ntv-border-radius').val(p.radius);
-      $('#ntv-radius-val').text(p.radius + 'px');
+      $('#ntv-border-radius-num').val(p.radius);
+      $('#ntv-radius-val').text(p.radius + '%');
 
       updateLivePreview();
     });
@@ -1004,8 +1045,13 @@
     const inactiveColor = $('#ntv-inactive-icon-color').val() || 'rgba(255, 255, 255, 0.7)';
     const glassBg = $('#ntv-glass-bg-color').val() || 'rgba(18, 18, 24, 0.82)';
     const glassBorder = $('#ntv-glass-border-color').val() || 'rgba(255, 255, 255, 0.12)';
-    const blur = $('#ntv-glass-blur').val() || 20;
-    const radius = $('#ntv-border-radius').val() || 999;
+    const blurPercent = parseInt($('#ntv-glass-blur-num').val() || $('#ntv-glass-blur').val(), 10) || 50;
+    const radiusPercent = parseInt($('#ntv-border-radius-num').val() || $('#ntv-border-radius').val(), 10) || 100;
+    const offsetPercent = parseInt($('#ntv-mobile-bottom-offset-num').val() || $('#ntv-mobile-bottom-offset').val(), 10) || 25;
+
+    const blurPx = Math.round((blurPercent / 100) * 40);
+    const radiusPx = radiusPercent >= 100 ? 999 : Math.round((radiusPercent / 100) * 48);
+    const offsetPx = Math.round((offsetPercent / 100) * 64);
     const widthMode = $('input[name="ntv_settings[navbar_width_mode]"]:checked').val() || 'auto';
     const customWidth = $('#ntv-navbar-custom-width').val() || 340;
 
@@ -1022,14 +1068,35 @@
       mockupNav[0].style.removeProperty('--ntv-custom-width');
     }
 
-    // Apply CSS Variables directly to the preview element
-    mockupNav[0].style.setProperty('--ntv-active-pill-bg', pillBg);
-    mockupNav[0].style.setProperty('--ntv-active-text', textColor);
-    mockupNav[0].style.setProperty('--ntv-inactive-icon', inactiveColor);
-    mockupNav[0].style.setProperty('--ntv-glass-bg', glassBg);
-    mockupNav[0].style.setProperty('--ntv-glass-border', glassBorder);
-    mockupNav[0].style.setProperty('--ntv-glass-blur', blur + 'px');
-    mockupNav[0].style.setProperty('--ntv-radius', radius + 'px');
+    mockupNav.css('bottom', offsetPx + 'px');
+
+    // Apply CSS Variables directly to container and glass nav
+    const glassNav = mockupNav.find('.ntv-glass-nav');
+    [mockupNav[0], glassNav[0]].forEach(function (el) {
+      if (!el) return;
+      el.style.setProperty('--ntv-active-bg', pillBg);
+      el.style.setProperty('--ntv-active-pill-bg', pillBg);
+      el.style.setProperty('--ntv-pill-bg', pillBg);
+      el.style.setProperty('--ntv-active-text', textColor);
+      el.style.setProperty('--ntv-active-text-color', textColor);
+      el.style.setProperty('--ntv-inactive-color', inactiveColor);
+      el.style.setProperty('--ntv-inactive-icon', inactiveColor);
+      el.style.setProperty('--ntv-glass-bg', glassBg);
+      el.style.setProperty('--ntv-glass-border', glassBorder);
+      el.style.setProperty('--ntv-blur', blurPx + 'px');
+      el.style.setProperty('--ntv-glass-blur', blurPx + 'px');
+      el.style.setProperty('--ntv-border-radius', radiusPx + 'px');
+      el.style.setProperty('--ntv-radius', radiusPx + 'px');
+      el.style.setProperty('--ntv-bottom-offset', offsetPx + 'px');
+    });
+
+    glassNav.css({
+      'background': glassBg,
+      'border-color': glassBorder,
+      'border-radius': radiusPx + 'px',
+      'backdrop-filter': 'blur(' + blurPx + 'px) saturate(180%)',
+      '-webkit-backdrop-filter': 'blur(' + blurPx + 'px) saturate(180%)'
+    });
 
     // Build Preview Items from Repeater
     let itemsHtml = '';
@@ -1059,11 +1126,11 @@
 
       itemsHtml += `
         <a href="javascript:void(0)" class="ntv-nav-item ${activeClass}" data-index="${idx}">
-          <span class="ntv-icon-wrap" aria-hidden="true">
+          <span class="ntv-icon-wrap ntv-nav-icon" aria-hidden="true">
             ${iconSvg}
             ${badgeHtml}
           </span>
-          <span class="ntv-label">${title}</span>
+          <span class="ntv-label ntv-nav-label">${title}</span>
         </a>
       `;
     });
@@ -1111,10 +1178,35 @@
 
     previewList.html(itemsHtml);
 
+    // Directly apply dynamic colors to active and inactive items
+    previewList.find('.ntv-nav-item.is-active').css({
+      'background': pillBg,
+      'color': textColor
+    });
+    previewList.find('.ntv-nav-item.is-active .ntv-label').css({
+      'color': textColor
+    });
+    previewList.find('.ntv-nav-item:not(.is-active)').css({
+      'background': 'transparent',
+      'color': inactiveColor
+    });
+    previewList.find('.ntv-nav-item:not(.is-active) .ntv-label').css({
+      'color': inactiveColor
+    });
+
     // Interactive Preview: Click tab to expand pill
     previewList.find('.ntv-nav-item:not(.ntv-more-trigger-item)').off('click').on('click', function () {
-      previewList.find('.ntv-nav-item').removeClass('is-active');
-      $(this).addClass('is-active');
+      previewList.find('.ntv-nav-item').removeClass('is-active').css({
+        'background': 'transparent',
+        'color': inactiveColor
+      });
+      previewList.find('.ntv-nav-item .ntv-label').css({ 'color': inactiveColor });
+
+      $(this).addClass('is-active').css({
+        'background': pillBg,
+        'color': textColor
+      });
+      $(this).find('.ntv-label').css({ 'color': textColor });
       $('#ntv-mockup-bubble').fadeOut(150);
     });
 

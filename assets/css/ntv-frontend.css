@@ -188,25 +188,28 @@
 }
 
 /* Icon Wrap */
-.ntv-icon-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  color: inherit;
+.ntv-icon-wrap,
+.ntv-nav-icon {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  flex-shrink: 0 !important;
+  color: inherit !important;
+  overflow: visible !important;
 }
 
-.ntv-icon-wrap svg {
-  width: 22px;
-  height: 22px;
-  display: block;
-  stroke-width: 2.2;
-  stroke: currentColor;
-  fill: none;
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+.ntv-icon-wrap svg,
+.ntv-nav-icon svg {
+  width: 22px !important;
+  height: 22px !important;
+  display: block !important;
+  stroke-width: 2.2 !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 .ntv-nav-item.is-active .ntv-icon-wrap svg {
@@ -369,23 +372,44 @@
 /* ==========================================================================
    Badges (WooCommerce Cart Count & Custom Text)
    ========================================================================== */
-.ntv-badge {
-  position: absolute;
-  top: -4px;
-  inset-inline-end: -8px;
-  background-color: var(--ntv-badge-bg, #EF4444);
-  color: var(--ntv-badge-text, #FFFFFF);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 3px 6px;
-  border-radius: 999px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  pointer-events: none;
-  z-index: 2;
+.ntv-badge,
+.ntv-cart-badge {
+  position: absolute !important;
+  top: -7px !important;
+  right: -9px !important;
+  left: auto !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  padding: 0 4px !important;
+  border-radius: 999px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 16px !important;
+  text-align: center !important;
+  background: #ef4444 !important;
+  background-color: var(--ntv-badge-bg, #ef4444) !important;
+  color: #ffffff !important;
+  color: var(--ntv-badge-text, #ffffff) !important;
+  border: 1.5px solid rgba(18, 18, 24, 0.9) !important;
+  box-sizing: border-box !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.ntv-badge.is-hidden {
+[dir="rtl"] .ntv-badge,
+[dir="rtl"] .ntv-cart-badge,
+.rtl .ntv-badge,
+.rtl .ntv-cart-badge {
+  right: auto !important;
+  left: -9px !important;
+}
+
+.ntv-badge.is-hidden,
+.ntv-badge.is-empty,
+.ntv-cart-badge.is-empty {
   display: none !important;
 }
 

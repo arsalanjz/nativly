@@ -183,8 +183,8 @@ class NTV_Activator {
 			'glass_bg_color'            => 'rgba(18, 18, 24, 0.82)',
 			'glass_border_color'        => 'rgba(255, 255, 255, 0.12)',
 			'glass_opacity'             => 0.82,
-			'glass_blur'                => 20,
-			'border_radius'             => 999,
+			'glass_blur'                => 50,
+			'border_radius'             => 100,
 
 			// Navbar Width Control: 'auto' (capsule), 'full' (calc(100% - 32px)), 'custom'.
 			'navbar_width_mode'         => 'auto',
@@ -192,7 +192,7 @@ class NTV_Activator {
 
 			// Desktop Layout Protection: default 'hidden' leaves desktop 100% untouched.
 			'desktop_position'          => 'hidden',
-			'mobile_bottom_offset'      => 16,
+			'mobile_bottom_offset'      => 25,
 			'body_bottom_padding'       => 85,
 
 			// Theme Header Hiding & Native App Feel.

@@ -83,13 +83,15 @@ class NTV_WooCommerce {
 			$count = self::get_cart_count();
 		}
 
-		$count = (int) $count;
-		$is_visible = $count > 0;
+		$count         = (int) $count;
+		$is_visible    = $count > 0;
+		$empty_class   = $is_visible ? '' : ' is-empty';
 		$display_style = $is_visible ? '' : ' style="display:none;"';
 		$display_count = $count > 99 ? '99+' : (string) $count;
 
 		return sprintf(
-			'<span class="ntv-badge ntv-cart-badge"%s data-count="%d" aria-label="%s">%s</span>',
+			'<span class="ntv-badge ntv-cart-badge%s"%s data-count="%d" aria-label="%s">%s</span>',
+			$empty_class,
 			$display_style,
 			$count,
 			/* translators: %d: number of items in shopping cart */

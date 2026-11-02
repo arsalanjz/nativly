@@ -460,16 +460,16 @@ class NTV_Settings {
 		$clean['inactive_icon_color'] = sanitize_text_field( $input['inactive_icon_color'] ?? 'rgba(255, 255, 255, 0.7)' );
 		$clean['glass_bg_color']      = sanitize_text_field( $input['glass_bg_color'] ?? 'rgba(18, 18, 24, 0.82)' );
 		$clean['glass_border_color']  = sanitize_text_field( $input['glass_border_color'] ?? 'rgba(255, 255, 255, 0.12)' );
-		$clean['glass_blur']          = isset( $input['glass_blur'] ) ? absint( $input['glass_blur'] ) : 20;
+		$clean['glass_blur']          = isset( $input['glass_blur'] ) ? min( 100, max( 0, absint( $input['glass_blur'] ) ) ) : 50;
 		$clean['glass_opacity']       = isset( $input['glass_opacity'] ) ? floatval( $input['glass_opacity'] ) : 0.82;
-		$clean['border_radius']       = isset( $input['border_radius'] ) ? absint( $input['border_radius'] ) : 999;
+		$clean['border_radius']       = isset( $input['border_radius'] ) ? min( 100, max( 0, absint( $input['border_radius'] ) ) ) : 100;
 
 		// Navbar Width Mode.
 		$clean['navbar_width_mode']   = in_array( $input['navbar_width_mode'] ?? '', array( 'auto', 'full', 'custom' ), true ) ? $input['navbar_width_mode'] : 'auto';
 		$clean['navbar_custom_width'] = ! empty( $input['navbar_custom_width'] ) ? sanitize_text_field( $input['navbar_custom_width'] ) : '90%';
 
 		$clean['desktop_position']    = in_array( $input['desktop_position'] ?? '', array( 'hidden', 'top', 'bottom' ), true ) ? $input['desktop_position'] : 'hidden';
-		$clean['mobile_bottom_offset'] = isset( $input['mobile_bottom_offset'] ) ? absint( $input['mobile_bottom_offset'] ) : 16;
+		$clean['mobile_bottom_offset'] = isset( $input['mobile_bottom_offset'] ) ? min( 100, max( 0, absint( $input['mobile_bottom_offset'] ) ) ) : 25;
 		$clean['body_bottom_padding'] = isset( $input['body_bottom_padding'] ) ? absint( $input['body_bottom_padding'] ) : 85;
 
 		// 3. Theme & Native App Feel.
@@ -931,32 +931,67 @@ class NTV_Settings {
 									</div>
 								</div>
 
+								<?php
+								// Normalize values to percentages (0-100) with backward compatibility.
+								$blur_raw = isset( $settings['glass_blur'] ) ? (int) $settings['glass_blur'] : 50;
+								if ( $blur_raw <= 40 && $blur_raw > 0 && isset( $settings['border_radius'] ) && (int) $settings['border_radius'] > 100 ) {
+									$blur_percent = (int) round( ( $blur_raw / 40 ) * 100 );
+								} else {
+									$blur_percent = min( 100, max( 0, $blur_raw ) );
+								}
+
+								$radius_raw = isset( $settings['border_radius'] ) ? (int) $settings['border_radius'] : 100;
+								if ( $radius_raw > 100 ) {
+									$radius_percent = 100;
+								} else {
+									$radius_percent = min( 100, max( 0, $radius_raw ) );
+								}
+
+								$offset_raw = isset( $settings['mobile_bottom_offset'] ) ? (int) $settings['mobile_bottom_offset'] : 25;
+								if ( $offset_raw <= 40 && $offset_raw > 0 && isset( $settings['border_radius'] ) && (int) $settings['border_radius'] > 100 ) {
+									$offset_percent = (int) round( ( $offset_raw / 64 ) * 100 );
+								} else {
+									$offset_percent = min( 100, max( 0, $offset_raw ) );
+								}
+								?>
 								<div class="ntv-sliders-stack ntv-mt-4">
 									<div class="ntv-slider-row">
 										<div class="ntv-slider-label">
-											<label for="ntv-glass-blur"><?php esc_html_e( 'شدت تاری پس‌زمینه (Blur):', 'nativly' ); ?></label>
-											<span class="ntv-badge-val" id="ntv-blur-val"><?php echo esc_html( (string) $settings['glass_blur'] ); ?>px</span>
+											<label for="ntv-glass-blur"><?php esc_html_e( 'شدت تاری پس‌زمینه (Blur %):', 'nativly' ); ?></label>
+											<span class="ntv-badge-val" id="ntv-blur-val"><?php echo esc_html( (string) $blur_percent ); ?>%</span>
 										</div>
 										<div class="ntv-slider-control">
-											<input type="range" name="ntv_settings[glass_blur]" id="ntv-glass-blur" min="0" max="40" step="1" value="<?php echo esc_attr( (string) $settings['glass_blur'] ); ?>" class="ntv-slider">
+											<input type="range" id="ntv-glass-blur" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $blur_percent ); ?>" class="ntv-slider">
+											<div class="ntv-slider-number-wrap">
+												<input type="number" name="ntv_settings[glass_blur]" id="ntv-glass-blur-num" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $blur_percent ); ?>" class="ntv-number-input">
+												<span class="ntv-unit">%</span>
+											</div>
 										</div>
 									</div>
 									<div class="ntv-slider-row">
 										<div class="ntv-slider-label">
-											<label for="ntv-border-radius"><?php esc_html_e( 'گردی گوشه‌ها (Border Radius):', 'nativly' ); ?></label>
-											<span class="ntv-badge-val" id="ntv-radius-val"><?php echo esc_html( (string) $settings['border_radius'] ); ?>px</span>
+											<label for="ntv-border-radius"><?php esc_html_e( 'گردی گوشه‌ها (Border Radius %):', 'nativly' ); ?></label>
+											<span class="ntv-badge-val" id="ntv-radius-val"><?php echo esc_html( (string) $radius_percent ); ?>%</span>
 										</div>
 										<div class="ntv-slider-control">
-											<input type="range" name="ntv_settings[border_radius]" id="ntv-border-radius" min="0" max="999" step="1" value="<?php echo esc_attr( (string) $settings['border_radius'] ); ?>" class="ntv-slider">
+											<input type="range" id="ntv-border-radius" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $radius_percent ); ?>" class="ntv-slider">
+											<div class="ntv-slider-number-wrap">
+												<input type="number" name="ntv_settings[border_radius]" id="ntv-border-radius-num" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $radius_percent ); ?>" class="ntv-number-input">
+												<span class="ntv-unit">%</span>
+											</div>
 										</div>
 									</div>
 									<div class="ntv-slider-row">
 										<div class="ntv-slider-label">
-											<label for="ntv-mobile-bottom-offset"><?php esc_html_e( 'فاصله از پایین صفحه (Bottom Offset):', 'nativly' ); ?></label>
-											<span class="ntv-badge-val" id="ntv-offset-val"><?php echo esc_html( (string) $settings['mobile_bottom_offset'] ); ?>px</span>
+											<label for="ntv-mobile-bottom-offset"><?php esc_html_e( 'فاصله از پایین صفحه (Bottom Offset %):', 'nativly' ); ?></label>
+											<span class="ntv-badge-val" id="ntv-offset-val"><?php echo esc_html( (string) $offset_percent ); ?>%</span>
 										</div>
 										<div class="ntv-slider-control">
-											<input type="range" name="ntv_settings[mobile_bottom_offset]" id="ntv-mobile-bottom-offset" min="0" max="40" step="1" value="<?php echo esc_attr( (string) $settings['mobile_bottom_offset'] ); ?>" class="ntv-slider">
+											<input type="range" id="ntv-mobile-bottom-offset" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $offset_percent ); ?>" class="ntv-slider">
+											<div class="ntv-slider-number-wrap">
+												<input type="number" name="ntv_settings[mobile_bottom_offset]" id="ntv-mobile-bottom-offset-num" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $offset_percent ); ?>" class="ntv-number-input">
+												<span class="ntv-unit">%</span>
+											</div>
 										</div>
 									</div>
 								</div>

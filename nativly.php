@@ -3,7 +3,7 @@
  * Plugin Name:       Nativly
  * Plugin URI:        https://github.com/arsalanjz/nativly
  * Description:       Transform WordPress into a native-like Progressive Web App (PWA) with an expanding glassmorphic navigation bar.
- * Version:           1.4.0
+ * Version:           1.5.0
  * Author:            Arsalan Jabarzare
  * Author URI:        https://github.com/arsalanjz
  * License:           GPL-2.0-or-later
@@ -19,7 +19,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Plugin Constants.
-define( 'NTV_VERSION', '1.4.0' );
+define( 'NTV_VERSION', '1.5.0' );
 define( 'NTV_PATH', plugin_dir_path( __FILE__ ) );
 define( 'NTV_URL', plugin_dir_url( __FILE__ ) );
 define( 'NTV_BASENAME', plugin_basename( __FILE__ ) );

@@ -236,9 +236,29 @@ class NTV_Navbar {
 		$inactive_icon_color = ! empty( $settings['inactive_icon_color'] ) ? $settings['inactive_icon_color'] : 'rgba(255, 255, 255, 0.7)';
 		$glass_bg_color      = ! empty( $settings['glass_bg_color'] ) ? $settings['glass_bg_color'] : 'rgba(18, 18, 24, 0.82)';
 		$glass_border_color  = ! empty( $settings['glass_border_color'] ) ? $settings['glass_border_color'] : 'rgba(255, 255, 255, 0.12)';
-		$glass_blur          = isset( $settings['glass_blur'] ) ? (int) $settings['glass_blur'] : 20;
-		$border_radius       = isset( $settings['border_radius'] ) ? (int) $settings['border_radius'] : 999;
-		$bottom_offset       = isset( $settings['mobile_bottom_offset'] ) ? (int) $settings['mobile_bottom_offset'] : 16;
+		// Convert percentage settings to CSS pixels with backward compatibility.
+		$blur_raw = isset( $settings['glass_blur'] ) ? (int) $settings['glass_blur'] : 50;
+		if ( $blur_raw <= 40 && $blur_raw > 0 && isset( $settings['border_radius'] ) && (int) $settings['border_radius'] > 100 ) {
+			$blur_percent = (int) round( ( $blur_raw / 40 ) * 100 );
+		} else {
+			$blur_percent = min( 100, max( 0, $blur_raw ) );
+		}
+		$glass_blur = (int) round( ( $blur_percent / 100 ) * 40 );
+
+		$radius_raw = isset( $settings['border_radius'] ) ? (int) $settings['border_radius'] : 100;
+		if ( $radius_raw >= 100 ) {
+			$border_radius = 999;
+		} else {
+			$border_radius = (int) round( ( min( 100, max( 0, $radius_raw ) ) / 100 ) * 48 );
+		}
+
+		$offset_raw = isset( $settings['mobile_bottom_offset'] ) ? (int) $settings['mobile_bottom_offset'] : 25;
+		if ( $offset_raw <= 40 && $offset_raw > 0 && isset( $settings['border_radius'] ) && (int) $settings['border_radius'] > 100 ) {
+			$offset_percent = (int) round( ( $offset_raw / 64 ) * 100 );
+		} else {
+			$offset_percent = min( 100, max( 0, $offset_raw ) );
+		}
+		$bottom_offset = (int) round( ( $offset_percent / 100 ) * 64 );
 		$body_bottom_padding = isset( $settings['body_bottom_padding'] ) ? (int) $settings['body_bottom_padding'] : 85;
 		$custom_width        = ! empty( $settings['navbar_custom_width'] ) ? $settings['navbar_custom_width'] : '90%';
 
@@ -277,9 +297,11 @@ class NTV_Navbar {
 		$css .= ".ntv-nav-item:not(.is-active) .ntv-nav-label, .ntv-nav-item:not(.is-active) .ntv-label { display: none !important; max-width: 0 !important; opacity: 0 !important; overflow: hidden !important; }\n";
 		$css .= ".ntv-nav-item.is-active { background: var(--ntv-active-bg, #0047FF) !important; color: var(--ntv-active-text, #FFFFFF) !important; padding: 0 18px !important; box-shadow: 0 4px 16px rgba(0, 71, 255, 0.35) !important; }\n";
 		$css .= ".ntv-nav-item.is-active .ntv-nav-label, .ntv-nav-item.is-active .ntv-label { display: inline-block !important; font-size: 13px !important; font-weight: 600 !important; color: var(--ntv-active-text, #FFFFFF) !important; opacity: 1 !important; max-width: 140px !important; margin-inline-start: 8px !important; }\n";
-		$css .= ".ntv-nav-icon, .ntv-icon-wrap { display: inline-flex !important; width: 22px !important; height: 22px !important; align-items: center !important; justify-content: center !important; position: relative !important; flex-shrink: 0 !important; color: inherit !important; }\n";
+		$css .= ".ntv-nav-icon, .ntv-icon-wrap { position: relative !important; display: inline-flex !important; width: 24px !important; height: 24px !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; color: inherit !important; overflow: visible !important; }\n";
 		$css .= ".ntv-nav-icon svg, .ntv-icon-wrap svg { width: 22px !important; height: 22px !important; stroke: currentColor !important; fill: none !important; stroke-width: 2.2 !important; display: block !important; }\n";
-		$css .= ".ntv-cart-badge, .ntv-badge { position: absolute !important; top: -4px !important; right: -4px !important; background: var(--ntv-badge-bg, #EF4444) !important; color: var(--ntv-badge-text, #FFFFFF) !important; font-size: 10px !important; font-weight: 700 !important; min-width: 16px !important; height: 16px !important; border-radius: 999px !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 4px !important; line-height: 1 !important; z-index: 2 !important; }\n";
+		$css .= ".ntv-cart-badge, .ntv-badge { position: absolute !important; top: -7px !important; right: -9px !important; left: auto !important; min-width: 16px !important; height: 16px !important; padding: 0 4px !important; border-radius: 999px !important; font-size: 10px !important; font-weight: 700 !important; line-height: 16px !important; text-align: center !important; background: #ef4444 !important; color: #ffffff !important; border: 1.5px solid rgba(18, 18, 24, 0.9) !important; box-sizing: border-box !important; z-index: 5 !important; pointer-events: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }\n";
+		$css .= "[dir='rtl'] .ntv-cart-badge, .rtl .ntv-cart-badge { right: auto !important; left: -9px !important; }\n";
+		$css .= ".ntv-cart-badge.is-empty, .ntv-badge.is-empty { display: none !important; }\n";
 		$css .= ".ntv-glass-bubble-popover:not(.is-open), .ntv-bubble-popover:not(.is-open) { display: none !important; opacity: 0 !important; pointer-events: none !important; }\n";
 
 		// View transitions feature.
