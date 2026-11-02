@@ -69,6 +69,12 @@ class NTV_Diagnostics {
 
 		// Autoptimize: JS Exclusions.
 		add_filter( 'autoptimize_filter_js_exclude', array( $this, 'exclude_autoptimize_js' ) );
+
+		// Perfmatters: RUCSS & JS Delay/Defer Exclusions.
+		add_filter( 'perfmatters_rucss_excluded_stylesheets', array( $this, 'exclude_perfmatters_css' ) );
+		add_filter( 'perfmatters_rucss_excluded_selectors', array( $this, 'exclude_perfmatters_selectors' ) );
+		add_filter( 'perfmatters_delay_js_exclusions', array( $this, 'exclude_perfmatters_js' ) );
+		add_filter( 'perfmatters_defer_js_exclusions', array( $this, 'exclude_perfmatters_js' ) );
 	}
 
 	/**
@@ -161,6 +167,56 @@ class NTV_Diagnostics {
 	 */
 	public function exclude_autoptimize_js( $exclude_string ) {
 		return $exclude_string . ', ntv-frontend.js, ntv-install-prompt.js';
+	}
+
+	/**
+	 * Exclude Nativly stylesheets from Perfmatters Remove Unused CSS (RUCSS).
+	 *
+	 * @param array<int,string>|mixed $excludes Existing exclusions.
+	 * @return array<int,string> Modified exclusions.
+	 */
+	public function exclude_perfmatters_css( $excludes ) {
+		$excludes   = is_array( $excludes ) ? $excludes : array();
+		$excludes[] = 'ntv-frontend.css';
+		$excludes[] = 'assets/css/ntv-frontend.css';
+		return array_values( array_unique( $excludes ) );
+	}
+
+	/**
+	 * Exclude Nativly selectors from Perfmatters RUCSS removal.
+	 *
+	 * @param array<int,string>|mixed $selectors Existing selectors.
+	 * @return array<int,string> Modified selectors.
+	 */
+	public function exclude_perfmatters_selectors( $selectors ) {
+		$selectors = is_array( $selectors ) ? $selectors : array();
+		$nativly_selectors = array(
+			'.ntv-glass-nav-container',
+			'#ntv-glass-navbar',
+			'.ntv-nav-list',
+			'.ntv-nav-item',
+			'.ntv-glass-bubble-popover',
+			'.ntv-bubble-popover',
+			'.ntv-cart-badge',
+			'#ntv-navbar-root',
+		);
+		return array_values( array_unique( array_merge( $selectors, $nativly_selectors ) ) );
+	}
+
+	/**
+	 * Exclude Nativly scripts from Perfmatters Delay & Defer JS.
+	 *
+	 * @param array<int,string>|mixed $excludes Existing exclusions.
+	 * @return array<int,string> Modified exclusions.
+	 */
+	public function exclude_perfmatters_js( $excludes ) {
+		$excludes = is_array( $excludes ) ? $excludes : array();
+		$items    = array(
+			'ntv-frontend.js',
+			'ntv-install-prompt.js',
+			'ntvFrontendData',
+		);
+		return array_values( array_unique( array_merge( $excludes, $items ) ) );
 	}
 
 	/**

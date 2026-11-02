@@ -360,16 +360,8 @@ class NTV_Settings {
 
 			NTV_Core::update_settings( $sanitized );
 
-			// Purge Caches: LiteSpeed, WP Rocket, WordPress Object Cache.
-			if ( has_action( 'litespeed_purge_all' ) ) {
-				do_action( 'litespeed_purge_all' );
-			}
-			if ( function_exists( 'rocket_clean_domain' ) ) {
-				rocket_clean_domain();
-			}
-			if ( function_exists( 'wp_cache_flush' ) ) {
-				wp_cache_flush();
-			}
+			// Purge all caching layers (LiteSpeed, WP Rocket, Super Cache, W3TC, SG, Perfmatters, Object Cache).
+			self::purge_all_caches();
 
 			$active_tab = isset( $_POST['ntv_active_tab'] ) ? sanitize_key( wp_unslash( $_POST['ntv_active_tab'] ) ) : 'menu';
 			if ( ! in_array( $active_tab, array( 'menu', 'styling', 'theme', 'pwa', 'tools', 'diagnostics' ), true ) ) {
@@ -529,6 +521,56 @@ class NTV_Settings {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Purge all major WordPress caching plugins, optimizer caches, and object caches.
+	 *
+	 * Supports LiteSpeed, WP Rocket, WP Super Cache, W3 Total Cache,
+	 * WP Fastest Cache, SiteGround Optimizer, Perfmatters, and WordPress Object Cache.
+	 *
+	 * @return void
+	 */
+	public static function purge_all_caches() {
+		// 1. LiteSpeed Cache
+		if ( has_action( 'litespeed_purge_all' ) ) {
+			do_action( 'litespeed_purge_all' );
+		}
+
+		// 2. WP Rocket
+		if ( function_exists( 'rocket_clean_domain' ) ) {
+			rocket_clean_domain();
+		}
+
+		// 3. WP Super Cache
+		if ( function_exists( 'wp_cache_clear_cache' ) ) {
+			wp_cache_clear_cache();
+		}
+
+		// 4. W3 Total Cache
+		if ( function_exists( 'w3tc_flush_all' ) ) {
+			w3tc_flush_all();
+		}
+
+		// 5. WP Fastest Cache
+		if ( isset( $GLOBALS['wp_fastest_cache'] ) && method_exists( $GLOBALS['wp_fastest_cache'], 'deleteCache' ) ) {
+			$GLOBALS['wp_fastest_cache']->deleteCache( true );
+		}
+
+		// 6. SiteGround Optimizer
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+			sg_cachepress_purge_cache();
+		}
+
+		// 7. Perfmatters Used CSS / Cache
+		if ( class_exists( '\Perfmatters\CSS' ) && method_exists( '\Perfmatters\CSS', 'clear_used_css' ) ) {
+			\Perfmatters\CSS::clear_used_css();
+		}
+
+		// 8. Core WordPress Object Cache
+		if ( function_exists( 'wp_cache_flush' ) ) {
+			wp_cache_flush();
+		}
+	}
+
 	public function ajax_purge_cache() {
 		check_ajax_referer( 'ntv_admin_nonce', 'nonce' );
 
@@ -540,9 +582,12 @@ class NTV_Settings {
 		$new_version = time();
 		update_option( 'ntv_cache_version', $new_version, false );
 
+		// Purge all caching layers.
+		self::purge_all_caches();
+
 		wp_send_json_success(
 			array(
-				'message' => __( 'کش PWA با موفقیت پاک‌سازی شد. کلاینت‌ها در بارگذاری بعدی نسخه جدید را دریافت خواهند کرد.', 'nativly' ),
+				'message' => __( 'کش با موفقیت پاک‌سازی شد.', 'nativly' ),
 				'version' => $new_version,
 			)
 		);
@@ -609,7 +654,7 @@ class NTV_Settings {
 				<div class="ntv-header-actions">
 					<button type="button" id="ntv-purge-cache-btn" class="button button-secondary ntv-btn-action">
 						<span class="dashicons dashicons-update"></span>
-						<?php esc_html_e( 'پاک‌سازی کش PWA', 'nativly' ); ?>
+						<?php esc_html_e( 'پاک‌سازی کش', 'nativly' ); ?>
 					</button>
 				</div>
 			</div>
@@ -886,18 +931,33 @@ class NTV_Settings {
 									</div>
 								</div>
 
-								<div class="ntv-grid-3 ntv-mt-3">
-									<div class="ntv-field-group">
-										<label for="ntv-glass-blur"><?php esc_html_e( 'شدت تاری پس‌زمینه (Blur px):', 'nativly' ); ?> <strong id="ntv-blur-val"><?php echo esc_html( (string) $settings['glass_blur'] ); ?>px</strong></label>
-										<input type="range" name="ntv_settings[glass_blur]" id="ntv-glass-blur" min="0" max="40" step="1" value="<?php echo esc_attr( (string) $settings['glass_blur'] ); ?>" class="ntv-slider">
+								<div class="ntv-sliders-stack ntv-mt-4">
+									<div class="ntv-slider-row">
+										<div class="ntv-slider-label">
+											<label for="ntv-glass-blur"><?php esc_html_e( 'شدت تاری پس‌زمینه (Blur):', 'nativly' ); ?></label>
+											<span class="ntv-badge-val" id="ntv-blur-val"><?php echo esc_html( (string) $settings['glass_blur'] ); ?>px</span>
+										</div>
+										<div class="ntv-slider-control">
+											<input type="range" name="ntv_settings[glass_blur]" id="ntv-glass-blur" min="0" max="40" step="1" value="<?php echo esc_attr( (string) $settings['glass_blur'] ); ?>" class="ntv-slider">
+										</div>
 									</div>
-									<div class="ntv-field-group">
-										<label for="ntv-border-radius"><?php esc_html_e( 'گردی گوشه‌ها (Border Radius):', 'nativly' ); ?> <strong id="ntv-radius-val"><?php echo esc_html( (string) $settings['border_radius'] ); ?>px</strong></label>
-										<input type="range" name="ntv_settings[border_radius]" id="ntv-border-radius" min="0" max="999" step="1" value="<?php echo esc_attr( (string) $settings['border_radius'] ); ?>" class="ntv-slider">
+									<div class="ntv-slider-row">
+										<div class="ntv-slider-label">
+											<label for="ntv-border-radius"><?php esc_html_e( 'گردی گوشه‌ها (Border Radius):', 'nativly' ); ?></label>
+											<span class="ntv-badge-val" id="ntv-radius-val"><?php echo esc_html( (string) $settings['border_radius'] ); ?>px</span>
+										</div>
+										<div class="ntv-slider-control">
+											<input type="range" name="ntv_settings[border_radius]" id="ntv-border-radius" min="0" max="999" step="1" value="<?php echo esc_attr( (string) $settings['border_radius'] ); ?>" class="ntv-slider">
+										</div>
 									</div>
-									<div class="ntv-field-group">
-										<label for="ntv-mobile-bottom-offset"><?php esc_html_e( 'فاصله از پایین صفحه (Bottom Offset):', 'nativly' ); ?> <strong id="ntv-offset-val"><?php echo esc_html( (string) $settings['mobile_bottom_offset'] ); ?>px</strong></label>
-										<input type="range" name="ntv_settings[mobile_bottom_offset]" id="ntv-mobile-bottom-offset" min="0" max="40" step="1" value="<?php echo esc_attr( (string) $settings['mobile_bottom_offset'] ); ?>" class="ntv-slider">
+									<div class="ntv-slider-row">
+										<div class="ntv-slider-label">
+											<label for="ntv-mobile-bottom-offset"><?php esc_html_e( 'فاصله از پایین صفحه (Bottom Offset):', 'nativly' ); ?></label>
+											<span class="ntv-badge-val" id="ntv-offset-val"><?php echo esc_html( (string) $settings['mobile_bottom_offset'] ); ?>px</span>
+										</div>
+										<div class="ntv-slider-control">
+											<input type="range" name="ntv_settings[mobile_bottom_offset]" id="ntv-mobile-bottom-offset" min="0" max="40" step="1" value="<?php echo esc_attr( (string) $settings['mobile_bottom_offset'] ); ?>" class="ntv-slider">
+										</div>
 									</div>
 								</div>
 							</div>
@@ -1142,10 +1202,10 @@ class NTV_Settings {
 					<!-- Tab 5: Tools & Cache -->
 					<div id="ntv-tab-tools" class="ntv-tab-content <?php echo 'tools' === $active_tab ? 'is-active' : ''; ?>">
 						<div class="ntv-card">
-							<h3 class="ntv-card-title"><?php esc_html_e( 'مدیریت و پاک‌سازی کش PWA', 'nativly' ); ?></h3>
+							<h3 class="ntv-card-title"><?php esc_html_e( 'مدیریت و پاک‌سازی کش', 'nativly' ); ?></h3>
 							<p class="ntv-card-subtitle"><?php esc_html_e( 'در صورتی که تغییری در صفحات یا کدهای سایت ایجاد کرده‌اید، با این دکمه کش سرویس‌ورکر کلاینت‌ها را فورس‌آپدیت کنید:', 'nativly' ); ?></p>
 							<button type="button" id="ntv-tools-purge-btn" class="ntv-btn ntv-btn-primary">
-								<span class="dashicons dashicons-update"></span> <?php esc_html_e( 'پاک‌سازی فوری کش PWA و لایت‌استپید', 'nativly' ); ?>
+								<span class="dashicons dashicons-update"></span> <?php esc_html_e( 'پاک‌سازی فوری کش', 'nativly' ); ?>
 							</button>
 						</div>
 
