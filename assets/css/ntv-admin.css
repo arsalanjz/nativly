@@ -1441,11 +1441,11 @@
 .ntv-opacity-control {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 12px !important;
   min-width: 260px !important;
   width: 280px !important;
   background: #FFFFFF !important;
-  padding: 5px 12px !important;
+  padding: 8px 16px !important;
   border-radius: 8px !important;
   border: 1px solid #E2E8F0 !important;
   box-sizing: border-box !important;
@@ -1471,11 +1471,13 @@ input[type="range"].ntv-opacity-slider {
 
 .ntv-opacity-slider-inline .ntv-opacity-val,
 .ntv-opacity-control .ntv-opacity-val {
-  min-width: 38px !important;
+  min-width: 42px !important;
   font-weight: 700 !important;
   color: #0047FF !important;
   font-size: 12px !important;
-  text-align: end !important;
+  text-align: left !important;
+  padding-left: 4px !important;
+  margin-inline-start: 4px !important;
 }
 
 /* Tab 2 Stacked Range Sliders */
@@ -1507,7 +1509,6 @@ input[type="range"].ntv-opacity-slider {
   flex: 0 0 240px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
 }
 
@@ -1529,6 +1530,23 @@ input[type="range"].ntv-opacity-slider {
   width: 100%;
   accent-color: #0047FF;
   cursor: pointer;
+}
+
+.ntv-slider-badge-wrap {
+  flex: 0 0 auto;
+}
+
+.ntv-slider-val-badge {
+  min-width: 48px;
+  text-align: center;
+  padding: 4px 10px;
+  background: #f0f6fc;
+  color: #0066ff;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-block;
+  box-sizing: border-box;
 }
 
 .ntv-color-row-swatches {

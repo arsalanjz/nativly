@@ -114,8 +114,83 @@ class NTV_Settings {
 	public static function get_site_palette() {
 		$palette = array();
 
-		// 1. WP Block Theme / Full Site Editing (FSE) theme.json palette.
+		// 1. Kadence Theme / Child Theme global palette.
+		// Kadence stores palette in option 'kadence_global_palette' or theme_mods as JSON string.
+		$kadence_raw = get_option( 'kadence_global_palette' );
+		if ( empty( $kadence_raw ) ) {
+			$kadence_raw = get_theme_mod( 'kadence_global_palette' );
+		}
+		if ( empty( $kadence_raw ) ) {
+			$kadence_raw = get_theme_mod( 'palette' );
+		}
+		if ( ! empty( $kadence_raw ) ) {
+			$decoded = is_string( $kadence_raw ) ? json_decode( $kadence_raw, true ) : $kadence_raw;
+			if ( is_array( $decoded ) ) {
+				$palette_list = array();
+				// Check active key in Kadence JSON structure: {"palette":[...],"active":"palette"}
+				if ( ! empty( $decoded['active'] ) && ! empty( $decoded[ $decoded['active'] ] ) && is_array( $decoded[ $decoded['active'] ] ) ) {
+					$palette_list = $decoded[ $decoded['active'] ];
+				} elseif ( ! empty( $decoded['palette'] ) && is_array( $decoded['palette'] ) ) {
+					$palette_list = $decoded['palette'];
+				} else {
+					$palette_list = $decoded;
+				}
+
+				foreach ( $palette_list as $item ) {
+					if ( is_array( $item ) && ! empty( $item['color'] ) ) {
+						$palette[] = sanitize_hex_color( $item['color'] );
+					} elseif ( is_string( $item ) ) {
+						$palette[] = sanitize_hex_color( $item );
+					}
+				}
+			}
+		}
+
+		// 2. Active Child Theme & Parent Theme style.css / functions.php CSS custom properties.
+		$css_paths = array();
+		if ( function_exists( 'get_stylesheet_directory' ) ) {
+			$css_paths[] = get_stylesheet_directory() . '/style.css';
+		}
+		if ( function_exists( 'get_template_directory' ) && get_template_directory() !== get_stylesheet_directory() ) {
+			$css_paths[] = get_template_directory() . '/style.css';
+		}
+
+		foreach ( $css_paths as $css_path ) {
+			if ( file_exists( $css_path ) && is_readable( $css_path ) ) {
+				$css_content = file_get_contents( $css_path, false, null, 0, 40000 );
+				if ( ! empty( $css_content ) ) {
+					// Match Kadence & standard theme custom properties: --global-palette1, --primary-color, --accent-color, etc.
+					if ( preg_match_all( '/--(?:global-palette\d?|primary|accent|brand|theme-color)[a-zA-Z0-9_-]*\s*:\s*(#[a-fA-F0-9]{3,8})/i', $css_content, $matches ) ) {
+						foreach ( $matches[1] as $hex ) {
+							$palette[] = sanitize_hex_color( $hex );
+						}
+					}
+				}
+			}
+		}
+
+		// Also check theme_mods for any stored color hex values
+		$all_mods = get_theme_mods();
+		if ( ! empty( $all_mods ) && is_array( $all_mods ) ) {
+			foreach ( $all_mods as $mod_key => $mod_val ) {
+				if ( is_string( $mod_val ) && preg_match( '/^#[a-fA-F0-9]{3,8}$/', $mod_val ) ) {
+					if ( preg_match( '/(?:palette|primary|accent|brand|link_color)/i', $mod_key ) ) {
+						$palette[] = sanitize_hex_color( $mod_val );
+					}
+				}
+			}
+		}
+
+		// 3. WP Block Theme / Full Site Editing (FSE) theme.json palette (custom then theme).
 		if ( function_exists( 'wp_get_global_settings' ) ) {
+			$fse_custom = wp_get_global_settings( array( 'color', 'palette', 'custom' ) );
+			if ( ! empty( $fse_custom ) && is_array( $fse_custom ) ) {
+				foreach ( $fse_custom as $c ) {
+					if ( ! empty( $c['color'] ) ) {
+						$palette[] = sanitize_hex_color( $c['color'] );
+					}
+				}
+			}
 			$fse_colors = wp_get_global_settings( array( 'color', 'palette', 'theme' ) );
 			if ( ! empty( $fse_colors ) && is_array( $fse_colors ) ) {
 				foreach ( $fse_colors as $c ) {
@@ -126,30 +201,7 @@ class NTV_Settings {
 			}
 		}
 
-		// 2. Kadence Theme global palette.
-		$kadence_palette = get_option( 'kadence_global_palette' );
-		if ( empty( $kadence_palette ) ) {
-			$kadence_palette = get_theme_mod( 'palette' );
-		}
-		if ( ! empty( $kadence_palette ) ) {
-			if ( is_string( $kadence_palette ) ) {
-				$decoded = json_decode( $kadence_palette, true );
-				if ( is_array( $decoded ) ) {
-					$kadence_palette = $decoded;
-				}
-			}
-			if ( is_array( $kadence_palette ) ) {
-				foreach ( $kadence_palette as $color_val ) {
-					if ( is_string( $color_val ) ) {
-						$palette[] = sanitize_hex_color( $color_val );
-					} elseif ( is_array( $color_val ) && ! empty( $color_val['color'] ) ) {
-						$palette[] = sanitize_hex_color( $color_val['color'] );
-					}
-				}
-			}
-		}
-
-		// 3. Astra Theme global palette.
+		// 4. Astra Theme global palette.
 		$astra_palette = get_theme_mod( 'global-color-palette' );
 		if ( ! empty( $astra_palette ) && is_array( $astra_palette ) && ! empty( $astra_palette['palette'] ) ) {
 			foreach ( $astra_palette['palette'] as $color_val ) {
@@ -159,7 +211,7 @@ class NTV_Settings {
 			}
 		}
 
-		// 4. Elementor Kit global colors.
+		// 5. Elementor Kit global colors.
 		$elementor_kit_id = get_option( 'elementor_active_kit' );
 		if ( $elementor_kit_id ) {
 			$kit_meta = get_post_meta( (int) $elementor_kit_id, '_elementor_page_settings', true );
@@ -183,7 +235,11 @@ class NTV_Settings {
 		$palette = array_values( array_unique( array_filter( array_map( 'strtoupper', $palette ) ) ) );
 
 		// Skip pure neutrals/whites/grays when selecting accent colors.
-		$neutrals = array( '#FFFFFF', '#FFF', '#000000', '#000', '#F8F9FA', '#F9FAFB', '#F3F4F6', '#EEEEEE', '#E5E7EB', '#121218', '#0F172A', '#1E293B', '#111827' );
+		$neutrals = array(
+			'#FFFFFF', '#FFF', '#000000', '#000',
+			'#F8F9FA', '#F9FAFB', '#F3F4F6', '#EEEEEE', '#E5E7EB', '#E2E8F0', '#CBD5E1', '#94A3B8', '#64748B',
+			'#121218', '#0F172A', '#1E293B', '#111827', '#18181B', '#27272A', '#3F3F46'
+		);
 		$accent_colors = array();
 		foreach ( $palette as $c ) {
 			if ( ! in_array( $c, $neutrals, true ) ) {
@@ -957,41 +1013,35 @@ class NTV_Settings {
 								<div class="ntv-sliders-stack ntv-mt-4">
 									<div class="ntv-slider-row">
 										<div class="ntv-slider-label">
-											<label for="ntv-glass-blur"><?php esc_html_e( 'شدت تاری پس‌زمینه (Blur %):', 'nativly' ); ?></label>
-											<span class="ntv-badge-val" id="ntv-blur-val"><?php echo esc_html( (string) $blur_percent ); ?>%</span>
+											<label for="ntv-glass-blur"><?php esc_html_e( 'شدت تاری پس‌زمینه (Blur):', 'nativly' ); ?></label>
 										</div>
 										<div class="ntv-slider-control">
-											<input type="range" id="ntv-glass-blur" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $blur_percent ); ?>" class="ntv-slider">
-											<div class="ntv-slider-number-wrap">
-												<input type="number" name="ntv_settings[glass_blur]" id="ntv-glass-blur-num" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $blur_percent ); ?>" class="ntv-number-input">
-												<span class="ntv-unit">%</span>
-											</div>
+											<input type="range" name="ntv_settings[glass_blur]" id="ntv-glass-blur" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $blur_percent ); ?>" class="ntv-slider">
+										</div>
+										<div class="ntv-slider-badge-wrap">
+											<span class="ntv-slider-val-badge" id="ntv-blur-val"><?php echo esc_html( (string) $blur_percent ); ?>%</span>
 										</div>
 									</div>
 									<div class="ntv-slider-row">
 										<div class="ntv-slider-label">
-											<label for="ntv-border-radius"><?php esc_html_e( 'گردی گوشه‌ها (Border Radius %):', 'nativly' ); ?></label>
-											<span class="ntv-badge-val" id="ntv-radius-val"><?php echo esc_html( (string) $radius_percent ); ?>%</span>
+											<label for="ntv-border-radius"><?php esc_html_e( 'گردی گوشه‌ها (Border Radius):', 'nativly' ); ?></label>
 										</div>
 										<div class="ntv-slider-control">
-											<input type="range" id="ntv-border-radius" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $radius_percent ); ?>" class="ntv-slider">
-											<div class="ntv-slider-number-wrap">
-												<input type="number" name="ntv_settings[border_radius]" id="ntv-border-radius-num" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $radius_percent ); ?>" class="ntv-number-input">
-												<span class="ntv-unit">%</span>
-											</div>
+											<input type="range" name="ntv_settings[border_radius]" id="ntv-border-radius" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $radius_percent ); ?>" class="ntv-slider">
+										</div>
+										<div class="ntv-slider-badge-wrap">
+											<span class="ntv-slider-val-badge" id="ntv-radius-val"><?php echo esc_html( (string) $radius_percent ); ?>%</span>
 										</div>
 									</div>
 									<div class="ntv-slider-row">
 										<div class="ntv-slider-label">
-											<label for="ntv-mobile-bottom-offset"><?php esc_html_e( 'فاصله از پایین صفحه (Bottom Offset %):', 'nativly' ); ?></label>
-											<span class="ntv-badge-val" id="ntv-offset-val"><?php echo esc_html( (string) $offset_percent ); ?>%</span>
+											<label for="ntv-mobile-bottom-offset"><?php esc_html_e( 'فاصله از پایین صفحه (Bottom Offset):', 'nativly' ); ?></label>
 										</div>
 										<div class="ntv-slider-control">
-											<input type="range" id="ntv-mobile-bottom-offset" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $offset_percent ); ?>" class="ntv-slider">
-											<div class="ntv-slider-number-wrap">
-												<input type="number" name="ntv_settings[mobile_bottom_offset]" id="ntv-mobile-bottom-offset-num" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $offset_percent ); ?>" class="ntv-number-input">
-												<span class="ntv-unit">%</span>
-											</div>
+											<input type="range" name="ntv_settings[mobile_bottom_offset]" id="ntv-mobile-bottom-offset" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $offset_percent ); ?>" class="ntv-slider">
+										</div>
+										<div class="ntv-slider-badge-wrap">
+											<span class="ntv-slider-val-badge" id="ntv-offset-val"><?php echo esc_html( (string) $offset_percent ); ?>%</span>
 										</div>
 									</div>
 								</div>

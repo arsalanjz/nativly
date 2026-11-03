@@ -302,7 +302,11 @@ class NTV_Navbar {
 		$css .= ".ntv-cart-badge, .ntv-badge { position: absolute !important; top: -7px !important; right: -9px !important; left: auto !important; min-width: 16px !important; height: 16px !important; padding: 0 4px !important; border-radius: 999px !important; font-size: 10px !important; font-weight: 700 !important; line-height: 16px !important; text-align: center !important; background: #ef4444 !important; color: #ffffff !important; border: 1.5px solid rgba(18, 18, 24, 0.9) !important; box-sizing: border-box !important; z-index: 5 !important; pointer-events: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }\n";
 		$css .= "[dir='rtl'] .ntv-cart-badge, .rtl .ntv-cart-badge { right: auto !important; left: -9px !important; }\n";
 		$css .= ".ntv-cart-badge.is-empty, .ntv-badge.is-empty { display: none !important; }\n";
-		$css .= ".ntv-glass-bubble-popover:not(.is-open), .ntv-bubble-popover:not(.is-open) { display: none !important; opacity: 0 !important; pointer-events: none !important; }\n";
+		$css .= "#ntv-top-loader { position: fixed !important; top: 0 !important; left: 0 !important; width: 0%; height: 3px !important; background: linear-gradient(90deg, var(--ntv-active-bg, #0047FF), #60a5fa) !important; box-shadow: 0 0 10px var(--ntv-active-bg, #0047FF) !important; z-index: 2147483647 !important; pointer-events: none !important; opacity: 0; transition: width 0.3s ease, opacity 0.25s ease !important; }\n";
+		$css .= "#ntv-top-loader.is-loading { opacity: 1 !important; width: 75% !important; }\n";
+		$css .= "#ntv-top-loader.is-done { width: 100% !important; opacity: 0 !important; transition: width 0.15s ease, opacity 0.35s ease 0.15s !important; }\n";
+		$css .= ".ntv-glass-bubble-popover, .ntv-bubble-popover { position: fixed !important; bottom: calc(var(--ntv-bottom-offset, 16px) + 74px + env(safe-area-inset-bottom, 0px)) !important; left: 50% !important; transform: translateX(-50%) translateY(12px) scale(0.95) !important; z-index: 2147483647 !important; width: max-content !important; min-width: 200px !important; max-width: calc(100vw - 32px) !important; padding: 12px !important; border-radius: 22px !important; background: var(--ntv-glass-bg, rgba(18, 18, 24, 0.88)) !important; backdrop-filter: blur(var(--ntv-glass-blur, 20px)) !important; -webkit-backdrop-filter: blur(var(--ntv-glass-blur, 20px)) !important; border: 1px solid var(--ntv-glass-border, rgba(255, 255, 255, 0.14)) !important; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35) !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transition: opacity 0.25s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.25s !important; }\n";
+		$css .= ".ntv-glass-bubble-popover.is-open, .ntv-glass-bubble-popover.is-visible, .ntv-bubble-popover.is-open, .ntv-bubble-popover.is-visible { display: block !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: translateX(-50%) translateY(0) scale(1) !important; }\n";
 
 		// View transitions feature.
 		if ( ! empty( $settings['enable_view_transitions'] ) ) {
@@ -624,11 +628,13 @@ class NTV_Navbar {
 		<style id="ntv-critical-inline-css" data-no-optimize="1" data-ls-no-optm="1" data-perfmatters-no-rucss="1">
 			<?php echo $this->generate_dynamic_css(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 		</style>
+		<!-- Nativly SPA Top Loader Bar -->
+		<div id="ntv-top-loader" aria-hidden="true"></div>
 		<!-- Nativly Expanding Glassmorphic Navbar -->
 		<div id="ntv-navbar-root" class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>" dir="<?php echo esc_attr( $dir_attr ); ?>" data-no-optimize="1" data-no-lazy="1">
 			<?php if ( $enable_more_menu && ! empty( $more_items ) ) : ?>
 				<!-- Liquid Glass Bubble Popover Submenu -->
-				<div id="ntv-glass-bubble-popover" class="ntv-bubble-popover" role="dialog" aria-modal="false" aria-hidden="true" style="display:none;">
+				<div id="ntv-glass-bubble-popover" class="ntv-bubble-popover ntv-glass-bubble-popover" role="dialog" aria-modal="false" aria-hidden="true">
 					<div class="ntv-bubble-glass-card">
 						<div class="ntv-bubble-grid">
 							<?php

@@ -697,15 +697,16 @@ function pruneCache(cache, maxItems) {
 				<button id="ntv-update-btn" class="ntv-toast-action" type="button"><?php esc_html_e( 'بروزرسانی', 'nativly' ); ?></button>
 			</div>
 
-			<!-- Android / Chromium Install Card -->
+			<!-- Android / Chromium / Mobile Install Card -->
 			<div id="ntv-install-card" class="ntv-glass-install-card" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="ntv-install-title">
+				<button id="ntv-install-close-x" class="ntv-install-close-x" type="button" aria-label="<?php esc_attr_e( 'بستن', 'nativly' ); ?>">&times;</button>
 				<div class="ntv-install-header">
 					<?php if ( ! empty( $icon_url ) ) : ?>
 						<img src="<?php echo esc_url( $icon_url ); ?>" alt="<?php echo esc_attr( $app_name ); ?>" class="ntv-install-app-icon" width="48" height="48">
 					<?php endif; ?>
 					<div class="ntv-install-info">
 						<h3 id="ntv-install-title" class="ntv-install-title"><?php echo esc_html( $app_name ); ?></h3>
-						<p class="ntv-install-desc"><?php esc_html_e( 'برای دسترسی سریع‌تر، اپلیکیشن را نصب کنید.', 'nativly' ); ?></p>
+						<p id="ntv-install-desc" class="ntv-install-desc"><?php esc_html_e( 'برای دسترسی سریع‌تر و تجربه بومی، این اپلیکیشن را نصب کنید.', 'nativly' ); ?></p>
 					</div>
 				</div>
 				<div class="ntv-install-actions">

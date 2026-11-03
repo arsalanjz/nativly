@@ -20,6 +20,16 @@
   }
 
   /**
+   * Helper: Detect mobile or tablet viewport/device
+   */
+  function isMobileOrTablet() {
+    const ua = window.navigator.userAgent || '';
+    const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(ua);
+    const isMobileWidth = window.innerWidth <= 992;
+    return isMobileUa || isMobileWidth;
+  }
+
+  /**
    * Helper: Detect standalone (already installed) mode.
    */
   function isStandalone() {
@@ -39,6 +49,17 @@
   }
 
   /**
+   * Page view counter exposed globally for SPA navigations
+   */
+  function incrementPageView() {
+    const storageKeyViews = 'ntv_pwa_page_views';
+    const current = parseInt(localStorage.getItem(storageKeyViews) || '0', 10) + 1;
+    localStorage.setItem(storageKeyViews, current.toString());
+    return current;
+  }
+  window.ntvIncrementPageView = incrementPageView;
+
+  /**
    * Service Worker Registration & Update Toast Handler
    */
   function initServiceWorker() {
@@ -48,13 +69,11 @@
 
     navigator.serviceWorker.register(config.swUrl, { scope: config.scope || '/' })
       .then(function (registration) {
-        // If a waiting worker already exists, prompt user immediately
         if (registration.waiting) {
           showUpdateToast(registration.waiting);
           return;
         }
 
-        // Detect new worker being installed
         registration.addEventListener('updatefound', function () {
           const newWorker = registration.installing;
           if (!newWorker) return;
@@ -70,7 +89,6 @@
         console.warn('[Nativly] SW Registration error:', err);
       });
 
-    // Reload page once new service worker takes control
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', function () {
       if (!refreshing) {
@@ -97,26 +115,14 @@
   }
 
   /**
-   * Smart Install Prompt Engine (Android & iOS)
+   * Smart Install Prompt Engine (Android, iOS & Mobile Viewports)
    */
   function initInstallPrompt() {
-    if (!config.enablePrompt || isStandalone() || isInAppBrowser()) {
+    if (!config.enablePrompt || isStandalone() || isInAppBrowser() || !isMobileOrTablet()) {
       return;
     }
 
-    // 1. Page view tracking
-    const storageKeyViews = 'ntv_pwa_page_views';
     const storageKeyDismissed = 'ntv_pwa_dismissed_at';
-
-    let currentViews = parseInt(localStorage.getItem(storageKeyViews) || '0', 10) + 1;
-    localStorage.setItem(storageKeyViews, currentViews.toString());
-
-    // Check minimum page views requirement
-    if (currentViews < (config.minPageViews || 1)) {
-      return;
-    }
-
-    // 2. Dismissal cooldown check
     const dismissedAt = parseInt(localStorage.getItem(storageKeyDismissed) || '0', 10);
     if (dismissedAt) {
       const cooldownMs = (config.cooldownDays || 7) * 24 * 60 * 60 * 1000;
@@ -125,68 +131,82 @@
       }
     }
 
+    // Track views
+    const currentViews = incrementPageView();
+    const minViews = config.minPageViews || 2;
+
+    // Trigger prompt if minViews requirement met or if minViews <= 2 (allowing first session view)
+    const shouldSchedule = (minViews <= 2) || (currentViews >= minViews);
+    if (!shouldSchedule) {
+      return;
+    }
+
     let deferredPrompt = null;
     const installCard = document.getElementById('ntv-install-card');
+    const installDesc = document.getElementById('ntv-install-desc');
     const confirmBtn = document.getElementById('ntv-install-confirm-btn');
     const dismissBtn = document.getElementById('ntv-install-dismiss-btn');
+    const closeXBtn = document.getElementById('ntv-install-close-x');
+    const iosModal = document.getElementById('ntv-ios-modal-backdrop');
+    const iosCloseBtn = document.getElementById('ntv-ios-close-btn');
 
-    // Chromium / Android beforeinstallprompt event
+    // Chromium beforeinstallprompt event
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       deferredPrompt = e;
-
-      // Show after configured delay
-      setTimeout(function () {
-        if (installCard) {
-          installCard.style.display = 'block';
-        }
-      }, (config.delaySeconds || 3) * 1000);
     });
 
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', function () {
-        if (deferredPrompt) {
-          installCard.style.display = 'none';
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(function () {
-            deferredPrompt = null;
-          });
+    function dismissPrompt() {
+      if (installCard) installCard.style.display = 'none';
+      if (iosModal) iosModal.style.display = 'none';
+      localStorage.setItem(storageKeyDismissed, Date.now().toString());
+    }
+
+    if (dismissBtn) dismissBtn.addEventListener('click', dismissPrompt);
+    if (closeXBtn) closeXBtn.addEventListener('click', dismissPrompt);
+    if (iosCloseBtn) iosCloseBtn.addEventListener('click', dismissPrompt);
+
+    if (iosModal) {
+      iosModal.addEventListener('click', function (e) {
+        if (e.target === iosModal) {
+          dismissPrompt();
         }
       });
     }
 
-    if (dismissBtn) {
-      dismissBtn.addEventListener('click', function () {
-        if (installCard) {
-          installCard.style.display = 'none';
+    // Schedule banner display after configured delay
+    const delayMs = (config.delaySeconds || 3) * 1000;
+    setTimeout(function () {
+      if (!installCard) return;
+
+      // If deferredPrompt did not fire or device is iOS, show friendly instructions
+      if (!deferredPrompt || isIosSafari()) {
+        if (installDesc) {
+          installDesc.textContent = 'برای نصب وب‌اپلیکیشن روی صفحه اصلی، دکمه Share / منوی مرورگر را زده و گزینه Add to Home Screen را انتخاب کنید';
         }
-        localStorage.setItem(storageKeyDismissed, Date.now().toString());
-      });
-    }
-
-    // iOS Safari specific modal prompt
-    if (isIosSafari()) {
-      const iosModal = document.getElementById('ntv-ios-modal-backdrop');
-      const iosCloseBtn = document.getElementById('ntv-ios-close-btn');
-
-      if (iosModal && iosCloseBtn) {
-        setTimeout(function () {
-          iosModal.style.display = 'flex';
-        }, (config.delaySeconds || 3) * 1000);
-
-        iosCloseBtn.addEventListener('click', function () {
-          iosModal.style.display = 'none';
-          localStorage.setItem(storageKeyDismissed, Date.now().toString());
-        });
-
-        iosModal.addEventListener('click', function (e) {
-          if (e.target === iosModal) {
-            iosModal.style.display = 'none';
-            localStorage.setItem(storageKeyDismissed, Date.now().toString());
-          }
-        });
       }
-    }
+
+      installCard.style.display = 'block';
+
+      if (confirmBtn) {
+        confirmBtn.onclick = function () {
+          if (deferredPrompt) {
+            installCard.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function () {
+              deferredPrompt = null;
+            });
+            localStorage.setItem(storageKeyDismissed, Date.now().toString());
+          } else if (isIosSafari()) {
+            installCard.style.display = 'none';
+            if (iosModal) iosModal.style.display = 'flex';
+          } else {
+            alert('برای نصب این اپلیکیشن، منوی مرورگر را باز کرده و گزینه «افزودن به صفحه اصلی» (Add to Home screen) را انتخاب کنید.');
+            dismissPrompt();
+          }
+        };
+      }
+    }, delayMs);
   }
 
   // Initialize once DOM is ready

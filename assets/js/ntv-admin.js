@@ -297,56 +297,23 @@
   }
 
   /**
-   * Sliders (Blur & Border Radius & Offset) with Percentage and Number Input Sync
+   * Sliders (Blur & Border Radius & Offset) with Percentage Display
    */
   function initSliders() {
-    // 1. Blur
     $('#ntv-glass-blur').on('input change', function () {
       const val = $(this).val();
-      $('#ntv-glass-blur-num').val(val);
-      $('#ntv-blur-val').text(val + '%');
-      updateLivePreview();
-    });
-    $('#ntv-glass-blur-num').on('input change', function () {
-      let val = parseInt($(this).val(), 10);
-      if (isNaN(val)) val = 0;
-      if (val < 0) val = 0;
-      if (val > 100) val = 100;
-      $('#ntv-glass-blur').val(val);
       $('#ntv-blur-val').text(val + '%');
       updateLivePreview();
     });
 
-    // 2. Border Radius
     $('#ntv-border-radius').on('input change', function () {
       const val = $(this).val();
-      $('#ntv-border-radius-num').val(val);
-      $('#ntv-radius-val').text(val + '%');
-      updateLivePreview();
-    });
-    $('#ntv-border-radius-num').on('input change', function () {
-      let val = parseInt($(this).val(), 10);
-      if (isNaN(val)) val = 0;
-      if (val < 0) val = 0;
-      if (val > 100) val = 100;
-      $('#ntv-border-radius').val(val);
       $('#ntv-radius-val').text(val + '%');
       updateLivePreview();
     });
 
-    // 3. Mobile Bottom Offset
     $('#ntv-mobile-bottom-offset').on('input change', function () {
       const val = $(this).val();
-      $('#ntv-mobile-bottom-offset-num').val(val);
-      $('#ntv-offset-val').text(val + '%');
-      updateLivePreview();
-    });
-    $('#ntv-mobile-bottom-offset-num').on('input change', function () {
-      let val = parseInt($(this).val(), 10);
-      if (isNaN(val)) val = 0;
-      if (val < 0) val = 0;
-      if (val > 100) val = 100;
-      $('#ntv-mobile-bottom-offset').val(val);
       $('#ntv-offset-val').text(val + '%');
       updateLivePreview();
     });
@@ -441,11 +408,9 @@
       applyRgbaField('ntv-glass-border-color', p.glass_border || 'rgba(255, 255, 255, 0.12)', '#FFFFFF', 12);
 
       $('#ntv-glass-blur').val(p.blur);
-      $('#ntv-glass-blur-num').val(p.blur);
       $('#ntv-blur-val').text(p.blur + '%');
 
       $('#ntv-border-radius').val(p.radius);
-      $('#ntv-border-radius-num').val(p.radius);
       $('#ntv-radius-val').text(p.radius + '%');
 
       updateLivePreview();
@@ -1045,9 +1010,9 @@
     const inactiveColor = $('#ntv-inactive-icon-color').val() || 'rgba(255, 255, 255, 0.7)';
     const glassBg = $('#ntv-glass-bg-color').val() || 'rgba(18, 18, 24, 0.82)';
     const glassBorder = $('#ntv-glass-border-color').val() || 'rgba(255, 255, 255, 0.12)';
-    const blurPercent = parseInt($('#ntv-glass-blur-num').val() || $('#ntv-glass-blur').val(), 10) || 50;
-    const radiusPercent = parseInt($('#ntv-border-radius-num').val() || $('#ntv-border-radius').val(), 10) || 100;
-    const offsetPercent = parseInt($('#ntv-mobile-bottom-offset-num').val() || $('#ntv-mobile-bottom-offset').val(), 10) || 25;
+    const blurPercent = parseInt($('#ntv-glass-blur').val(), 10) || 50;
+    const radiusPercent = parseInt($('#ntv-border-radius').val(), 10) || 100;
+    const offsetPercent = parseInt($('#ntv-mobile-bottom-offset').val(), 10) || 25;
 
     const blurPx = Math.round((blurPercent / 100) * 40);
     const radiusPx = radiusPercent >= 100 ? 999 : Math.round((radiusPercent / 100) * 48);
