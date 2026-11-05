@@ -1441,11 +1441,12 @@
 .ntv-opacity-control {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  min-width: 260px !important;
-  width: 280px !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  min-width: 240px !important;
+  width: auto !important;
   background: #FFFFFF !important;
-  padding: 8px 16px !important;
+  padding: 6px 12px !important;
   border-radius: 8px !important;
   border: 1px solid #E2E8F0 !important;
   box-sizing: border-box !important;
@@ -1462,9 +1463,9 @@
 .ntv-opacity-slider-inline .ntv-opacity-slider,
 .ntv-opacity-control .ntv-opacity-slider,
 input[type="range"].ntv-opacity-slider {
-  flex: 1 !important;
+  flex: 1 1 auto !important;
   width: auto !important;
-  min-width: 170px !important;
+  min-width: 80px !important;
   accent-color: #0047FF !important;
   cursor: pointer !important;
 }
@@ -1477,7 +1478,7 @@ input[type="range"].ntv-opacity-slider {
   border-radius: 6px !important;
   font-weight: 700 !important;
   font-size: 12px !important;
-  min-width: 40px !important;
+  min-width: 42px !important;
   text-align: center !important;
   box-sizing: border-box !important;
   flex-shrink: 0 !important;
@@ -1553,28 +1554,50 @@ input[type="range"].ntv-opacity-slider {
 }
 
 .ntv-color-row-swatches {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
 }
 
 .ntv-inline-swatch {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 0 0 1px #CBD5E1, 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  outline: none;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  border: 2px solid #FFFFFF !important;
+  box-shadow: 0 0 0 1px #CBD5E1, 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
 
 .ntv-inline-swatch:hover {
-  transform: scale(1.22);
-  box-shadow: 0 0 0 2px #0047FF, 0 2px 6px rgba(0, 71, 255, 0.35);
-  z-index: 2;
+  transform: scale(1.2) !important;
+  box-shadow: 0 0 0 2px #0047FF, 0 2px 6px rgba(0, 71, 255, 0.35) !important;
+  z-index: 2 !important;
+}
+
+.ntv-swatch-divider {
+  width: 1px !important;
+  height: 20px !important;
+  background: #dcdcde !important;
+  margin: 0 4px !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+}
+
+.ntv-suggested-label {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-left: 2px !important;
+  cursor: default !important;
+  user-select: none !important;
 }
 
 /* Tab 5 Tools Purge Button */
@@ -1779,17 +1802,19 @@ input[type="range"].ntv-opacity-slider {
 /* Smart Harmonious Suggested Swatches */
 .ntv-inline-swatch.ntv-swatch-suggested {
   position: relative !important;
-  border: 1.5px dashed rgba(255, 255, 255, 0.8) !important;
-  box-shadow: 0 0 0 1px rgba(0, 71, 255, 0.35) !important;
+  border: 2px solid #FFFFFF !important;
+  box-shadow: 0 0 0 1.5px rgba(0, 71, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
-.ntv-inline-swatch.ntv-swatch-suggested .ntv-swatch-sparkle {
-  font-size: 9px !important;
-  color: #ffffff !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
-  pointer-events: none !important;
+.ntv-inline-swatch.ntv-swatch-suggested:hover {
+  box-shadow: 0 0 0 2.5px #0047FF, 0 2px 8px rgba(0, 71, 255, 0.45) !important;
+}
+
+/* Mockup More Button Active / Open */
+.ntv-more-trigger-item.is-open {
+  background: var(--ntv-active-pill-bg, #0047FF) !important;
+  color: var(--ntv-active-text, #FFFFFF) !important;
+}
+.ntv-more-trigger-item.is-open svg {
+  stroke: var(--ntv-active-text, #FFFFFF) !important;
 }

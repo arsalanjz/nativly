@@ -231,8 +231,7 @@ class NTV_Settings {
 					$palette_list = $decoded;
 				}
 
-				// Extract the first 3 colors (palette1, palette2, palette3) in exact order without skipping palette3.
-				// Only skip pure white / near-white background slots (palette7-palette9).
+				$all_raw_colors = array();
 				foreach ( $palette_list as $item ) {
 					$c = '';
 					if ( is_array( $item ) && ! empty( $item['color'] ) ) {
@@ -243,13 +242,47 @@ class NTV_Settings {
 					if ( $c ) {
 						$upper = strtoupper( $c );
 						if ( ! in_array( $upper, array( '#FFFFFF', '#FFF', '#F7FAFC', '#FAFAFA' ), true ) ) {
-							if ( ! in_array( $upper, $theme_colors, true ) ) {
-								$theme_colors[] = $upper;
-							}
+							$all_raw_colors[] = $upper;
 						}
 					}
-					if ( count( $theme_colors ) >= 3 ) {
-						break;
+				}
+
+				if ( ! empty( $all_raw_colors ) ) {
+					// 1st accent (palette1)
+					if ( isset( $all_raw_colors[0] ) ) {
+						$theme_colors[] = $all_raw_colors[0];
+					}
+					// 2nd accent (palette2)
+					if ( isset( $all_raw_colors[1] ) && ! in_array( $all_raw_colors[1], $theme_colors, true ) ) {
+						$theme_colors[] = $all_raw_colors[1];
+					}
+
+					// 3rd color: Look for #4A4A4A or dark charcoal first; if not found, scan slots starting from index 2
+					// and pick the user's custom accent while avoiding dark navy (#1a202c/#0f172a) and light backgrounds.
+					$third_color = '';
+					foreach ( $all_raw_colors as $rc ) {
+						if ( '#4A4A4A' === $rc ) {
+							$third_color = '#4A4A4A';
+							break;
+						}
+					}
+					if ( empty( $third_color ) && count( $all_raw_colors ) > 2 ) {
+						$dark_navies = array( '#1A202C', '#0F172A', '#1E293B', '#111827', '#2B374A', '#0D1117' );
+						$light_grays = array( '#FFFFFF', '#FFF', '#F7FAFC', '#FAFAFA', '#F1F5F9', '#E2E8F0', '#EDF2F7' );
+						for ( $i = 2; $i < count( $all_raw_colors ); $i++ ) {
+							$cand = $all_raw_colors[ $i ];
+							if ( in_array( $cand, $dark_navies, true ) || in_array( $cand, $light_grays, true ) || in_array( $cand, $theme_colors, true ) ) {
+								continue;
+							}
+							$third_color = $cand;
+							break;
+						}
+					}
+					if ( empty( $third_color ) ) {
+						$third_color = '#4A4A4A';
+					}
+					if ( ! in_array( $third_color, $theme_colors, true ) ) {
+						$theme_colors[] = $third_color;
 					}
 				}
 			}
@@ -333,20 +366,25 @@ class NTV_Settings {
 		$theme_colors = array_slice( array_values( array_unique( $theme_colors ) ), 0, 3 );
 
 		// 5. Smart Color Suggestion Engine (Colors #4 and #5) using HSL color harmony theory.
-		$primary_hex = ! empty( $theme_colors[0] ) ? $theme_colors[0] : '#0047FF';
+		$primary_hex = ! empty( $theme_colors[0] ) ? $theme_colors[0] : '#00A8E8';
 		$hsl         = self::hex_to_hsl( $primary_hex );
 
-		// Color 4: Warm / Complementary Accent (+160° hue shift).
-		$h_warm    = fmod( $hsl['h'] + 160, 360 );
-		$s_warm    = min( 0.95, max( 0.70, (float) $hsl['s'] ) );
-		$l_warm    = min( 0.58, max( 0.45, (float) $hsl['l'] ) );
-		$color_sug1 = self::hsl_to_hex( $h_warm, $s_warm, $l_warm );
+		// Suggestion 1: Warm Amber / Gold Craft Accent (shift hue by +165 degrees, saturation 82%, lightness 50%)
+		$h_warm = fmod( (float) $hsl['h'] + 165.0, 360.0 );
+		if ( $h_warm < 0 ) {
+			$h_warm += 360.0;
+		}
+		if ( $h_warm >= 340.0 || $h_warm <= 20.0 ) {
+			$h_warm = 42.0; // Rich warm gold / amber
+		}
+		$color_sug1 = strtoupper( self::hsl_to_hex( $h_warm, 0.82, 0.50 ) );
 
-		// Color 5: Soft Analogous / Triadic Accent (+45° hue shift).
-		$h_analog   = fmod( $hsl['h'] + 45, 360 );
-		$s_analog   = min( 0.90, max( 0.65, (float) $hsl['s'] ) );
-		$l_analog   = min( 0.55, max( 0.42, (float) $hsl['l'] ) );
-		$color_sug2 = self::hsl_to_hex( $h_analog, $s_analog, $l_analog );
+		// Suggestion 2: Soft Emerald / Mint Accent (shift hue by -38 degrees, saturation 74%, lightness 43%)
+		$h_analog = fmod( (float) $hsl['h'] - 38.0 + 360.0, 360.0 );
+		if ( $h_analog < 0 ) {
+			$h_analog += 360.0;
+		}
+		$color_sug2 = strtoupper( self::hsl_to_hex( $h_analog, 0.74, 0.43 ) );
 
 		// Build final 5 color objects
 		$palette = array();
@@ -360,15 +398,52 @@ class NTV_Settings {
 		$palette[] = array(
 			'color' => $color_sug1,
 			'type'  => 'suggested',
-			'label' => __( 'پیشنهاد هوشمند مکمل', 'nativly' ),
+			'label' => __( 'پیشنهاد هوشمند متناسب با پالت سایت شما', 'nativly' ),
 		);
 		$palette[] = array(
 			'color' => $color_sug2,
 			'type'  => 'suggested',
-			'label' => __( 'پیشنهاد هوشمند مکمل', 'nativly' ),
+			'label' => __( 'پیشنهاد هوشمند متناسب با پالت سایت شما', 'nativly' ),
 		);
 
 		return $palette;
+	}
+
+	/**
+	 * Render 3 theme swatches + divider + sparkle badge + 2 suggested swatches.
+	 *
+	 * @param array<int, array{color: string, type: string, label: string}> $site_palette Palette list.
+	 * @return void
+	 */
+	public static function render_palette_swatches( $site_palette ) {
+		// 1. Theme Color Swatches (First 3)
+		foreach ( $site_palette as $p_item ) {
+			$color_hex  = is_array( $p_item ) ? $p_item['color'] : $p_item;
+			$color_type = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+			if ( 'theme' !== $color_type ) {
+				continue;
+			}
+			$swatch_title = sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
+			?>
+			<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>"></button>
+			<?php
+		}
+		?>
+		<span class="ntv-swatch-divider" style="width:1px;height:20px;background:#dcdcde;margin:0 4px;display:inline-block;flex-shrink:0;"></span>
+		<span class="ntv-suggested-label" title="<?php esc_attr_e( 'رنگ‌های پیشنهادی متناسب با پالت سایت شما', 'nativly' ); ?>" style="font-size:14px;line-height:1;display:inline-flex;align-items:center;margin-left:2px;cursor:default;">✨</span>
+		<?php
+		// 2. Suggested Harmonious Color Swatches (Next 2)
+		foreach ( $site_palette as $p_item ) {
+			$color_hex  = is_array( $p_item ) ? $p_item['color'] : $p_item;
+			$color_type = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+			if ( 'suggested' !== $color_type ) {
+				continue;
+			}
+			$swatch_title = sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex );
+			?>
+			<button type="button" class="ntv-inline-swatch ntv-swatch-suggested" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>"></button>
+			<?php
+		}
 	}
 
 	public function register_admin_menu() {
@@ -1012,22 +1087,7 @@ class NTV_Settings {
 											<input type="text" name="ntv_settings[active_pill_bg]" id="ntv-active-pill-bg" value="<?php echo esc_attr( $settings['active_pill_bg'] ); ?>" class="ntv-color-picker" data-default-color="#0047FF">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php
-											foreach ( $site_palette as $p_item ) :
-												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
-												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
-												$is_suggested = ( 'suggested' === $color_type );
-												$swatch_title = $is_suggested
-													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
-													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
-												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
-												?>
-												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
-													<?php if ( $is_suggested ) : ?>
-														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
-													<?php endif; ?>
-												</button>
-											<?php endforeach; ?>
+											<?php self::render_palette_swatches( $site_palette ); ?>
 										</div>
 									</div>
 
@@ -1040,22 +1100,7 @@ class NTV_Settings {
 											<input type="text" name="ntv_settings[active_text_color]" id="ntv-active-text-color" value="<?php echo esc_attr( $settings['active_text_color'] ); ?>" class="ntv-color-picker" data-default-color="#FFFFFF">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php
-											foreach ( $site_palette as $p_item ) :
-												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
-												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
-												$is_suggested = ( 'suggested' === $color_type );
-												$swatch_title = $is_suggested
-													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
-													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
-												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
-												?>
-												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
-													<?php if ( $is_suggested ) : ?>
-														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
-													<?php endif; ?>
-												</button>
-											<?php endforeach; ?>
+											<?php self::render_palette_swatches( $site_palette ); ?>
 										</div>
 									</div>
 
@@ -1074,22 +1119,7 @@ class NTV_Settings {
 											<input type="hidden" name="ntv_settings[inactive_icon_color]" id="ntv-inactive-icon-color" value="<?php echo esc_attr( $settings['inactive_icon_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php
-											foreach ( $site_palette as $p_item ) :
-												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
-												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
-												$is_suggested = ( 'suggested' === $color_type );
-												$swatch_title = $is_suggested
-													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
-													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
-												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
-												?>
-												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
-													<?php if ( $is_suggested ) : ?>
-														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
-													<?php endif; ?>
-												</button>
-											<?php endforeach; ?>
+											<?php self::render_palette_swatches( $site_palette ); ?>
 										</div>
 									</div>
 
@@ -1108,22 +1138,7 @@ class NTV_Settings {
 											<input type="hidden" name="ntv_settings[glass_bg_color]" id="ntv-glass-bg-color" value="<?php echo esc_attr( $settings['glass_bg_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php
-											foreach ( $site_palette as $p_item ) :
-												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
-												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
-												$is_suggested = ( 'suggested' === $color_type );
-												$swatch_title = $is_suggested
-													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
-													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
-												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
-												?>
-												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
-													<?php if ( $is_suggested ) : ?>
-														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
-													<?php endif; ?>
-												</button>
-											<?php endforeach; ?>
+											<?php self::render_palette_swatches( $site_palette ); ?>
 										</div>
 									</div>
 
@@ -1142,22 +1157,7 @@ class NTV_Settings {
 											<input type="hidden" name="ntv_settings[glass_border_color]" id="ntv-glass-border-color" value="<?php echo esc_attr( $settings['glass_border_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php
-											foreach ( $site_palette as $p_item ) :
-												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
-												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
-												$is_suggested = ( 'suggested' === $color_type );
-												$swatch_title = $is_suggested
-													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
-													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
-												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
-												?>
-												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
-													<?php if ( $is_suggested ) : ?>
-														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
-													<?php endif; ?>
-												</button>
-											<?php endforeach; ?>
+											<?php self::render_palette_swatches( $site_palette ); ?>
 										</div>
 									</div>
 								</div>

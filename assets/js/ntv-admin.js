@@ -1174,14 +1174,20 @@
         'color': inactiveColor
       });
       previewList.find('.ntv-nav-item .ntv-label').css({ 'color': inactiveColor });
+      previewList.find('.ntv-nav-item svg').css({ 'stroke': inactiveColor, 'color': inactiveColor });
 
       $(this).addClass('is-active').css({
         'background': pillBg,
         'color': textColor
       });
       $(this).find('.ntv-label').css({ 'color': textColor });
+      $(this).find('svg').css({ 'stroke': textColor, 'color': textColor });
       $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble').removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
-      $('#ntv-mockup-more-trigger').removeClass('is-open');
+      $('#ntv-mockup-more-trigger').removeClass('is-open').css({
+        'background': 'transparent',
+        'color': inactiveColor
+      });
+      $('#ntv-mockup-more-trigger').find('svg').css({ 'stroke': inactiveColor, 'color': inactiveColor });
     });
 
     // Interactive Preview: Click More trigger to toggle bubble
@@ -1191,10 +1197,18 @@
       const isVisible = popover.is(':visible') || popover.hasClass('is-open');
       if (isVisible) {
         popover.removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
-        $(this).removeClass('is-open');
+        $(this).removeClass('is-open').css({
+          'background': 'transparent',
+          'color': inactiveColor
+        });
+        $(this).find('svg').css({ 'stroke': inactiveColor, 'color': inactiveColor });
       } else {
         popover.addClass('is-open is-visible').attr('aria-hidden', 'false').fadeIn(150);
-        $(this).addClass('is-open');
+        $(this).addClass('is-open').css({
+          'background': pillBg,
+          'color': textColor
+        });
+        $(this).find('svg').css({ 'stroke': textColor, 'color': textColor });
       }
     });
 
@@ -1202,7 +1216,11 @@
     $('.ntv-phone-screen').off('click.ntvMockup').on('click.ntvMockup', function (e) {
       if (!$(e.target).closest('#ntv-mockup-bubble-popover, #ntv-mockup-bubble, #ntv-mockup-more-trigger').length) {
         $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble').removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
-        $('#ntv-mockup-more-trigger').removeClass('is-open');
+        $('#ntv-mockup-more-trigger').removeClass('is-open').css({
+          'background': 'transparent',
+          'color': inactiveColor
+        });
+        $('#ntv-mockup-more-trigger').find('svg').css({ 'stroke': inactiveColor, 'color': inactiveColor });
       }
     });
   }

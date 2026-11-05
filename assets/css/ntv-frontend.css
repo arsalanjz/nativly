@@ -273,9 +273,36 @@
   overflow: hidden !important;
 }
 
-.ntv-more-trigger.is-open:not(.is-active) {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #FFFFFF !important;
+.ntv-more-trigger.is-open,
+.ntv-more-trigger.is-active,
+.ntv-more-item.is-open,
+.ntv-more-item.is-active,
+#ntv-more-trigger.is-open,
+#ntv-more-trigger.is-active {
+  background: var(--ntv-active-pill-bg, var(--ntv-active-bg, #0047FF)) !important;
+  color: var(--ntv-active-text, #FFFFFF) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
+}
+
+.ntv-more-trigger.is-open svg,
+.ntv-more-trigger.is-active svg,
+.ntv-more-item.is-open svg,
+.ntv-more-item.is-active svg,
+#ntv-more-trigger.is-open svg,
+#ntv-more-trigger.is-active svg {
+  color: var(--ntv-active-text, #FFFFFF) !important;
+  stroke: var(--ntv-active-text, #FFFFFF) !important;
+}
+
+.ntv-more-trigger.is-open:not(.is-active) .ntv-nav-label,
+.ntv-more-item.is-open:not(.is-active) .ntv-nav-label,
+.ntv-more-trigger.is-open:not(.is-active) .ntv-label,
+.ntv-more-item.is-open:not(.is-active) .ntv-label,
+#ntv-more-trigger.is-open:not(.is-active) .ntv-label {
+  display: none !important;
+  max-width: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
 }
 
 .ntv-more-trigger.is-active .ntv-nav-label,
@@ -569,15 +596,18 @@
   gap: 12px !important;
 }
 
-.ntv-toast-text {
-  color: #FFFFFF !important;
+.ntv-toast-text,
+.ntv-sw-toast-text {
+  color: var(--ntv-inactive-icon, var(--ntv-inactive-color, #FFFFFF)) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
 }
 
-.ntv-toast-action {
-  background: var(--ntv-active-bg, #0047FF) !important;
-  color: #FFFFFF !important;
+.ntv-toast-action,
+#ntv-sw-update-btn,
+#ntv-update-btn {
+  background: var(--ntv-active-pill-bg, var(--ntv-active-bg, #0047FF)) !important;
+  color: var(--ntv-active-text, #FFFFFF) !important;
   border: none !important;
   border-radius: 8px !important;
   padding: 6px 14px !important;
@@ -610,7 +640,7 @@
   margin: 0 0 4px 0 !important;
   font-size: 15px !important;
   font-weight: 700 !important;
-  color: #FFFFFF !important;
+  color: var(--ntv-inactive-icon, var(--ntv-inactive-color, #FFFFFF)) !important;
   line-height: 1.3 !important;
 }
 
@@ -618,7 +648,8 @@
   margin: 0 !important;
   font-size: 12px !important;
   line-height: 1.5 !important;
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: var(--ntv-inactive-icon, var(--ntv-inactive-color, rgba(255, 255, 255, 0.8))) !important;
+  opacity: 0.9 !important;
 }
 
 .ntv-install-close-x {

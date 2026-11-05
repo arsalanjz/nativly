@@ -654,6 +654,7 @@ function pruneCache(cache, maxItems) {
 				'minPageViews'      => isset( $settings['install_prompt_min_views'] ) ? (int) $settings['install_prompt_min_views'] : 2,
 				'cooldownDays'      => isset( $settings['install_prompt_cooldown_days'] ) ? (int) $settings['install_prompt_cooldown_days'] : 7,
 				'isRTL'             => is_rtl(),
+				'cacheVersion'      => $cache_version,
 				'i18n'              => array(
 					'updateAvailable'   => __( 'نسخه جدید آماده است — بروزرسانی', 'nativly' ),
 					'installApp'        => __( 'نصب اپلیکیشن', 'nativly' ),
@@ -691,10 +692,10 @@ function pruneCache(cache, maxItems) {
 		<!-- Nativly PWA Update Toast & Install Prompt Shell -->
 		<div id="ntv-pwa-toast-container" class="ntv-pwa-container" dir="<?php echo esc_attr( $dir_attr ); ?>">
 			<!-- SW Update Ready Toast -->
-			<div id="ntv-update-toast" class="ntv-glass-toast" style="display: none;" role="alert">
+			<div id="ntv-sw-update-toast" class="ntv-glass-toast ntv-sw-update-toast" style="display: none;" role="alert">
 				<span class="ntv-toast-icon">✨</span>
-				<span class="ntv-toast-text"><?php esc_html_e( 'نسخه جدید آماده است — بروزرسانی', 'nativly' ); ?></span>
-				<button id="ntv-update-btn" class="ntv-toast-action" type="button"><?php esc_html_e( 'بروزرسانی', 'nativly' ); ?></button>
+				<span class="ntv-toast-text ntv-sw-toast-text"><?php esc_html_e( 'نسخه جدید آماده است — بروزرسانی', 'nativly' ); ?></span>
+				<button id="ntv-sw-update-btn" class="ntv-toast-action ntv-sw-update-btn" type="button"><?php esc_html_e( 'بروزرسانی', 'nativly' ); ?></button>
 			</div>
 
 			<!-- Android / Chromium / Mobile Install Card -->

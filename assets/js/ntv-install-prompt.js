@@ -69,8 +69,9 @@
 
     navigator.serviceWorker.register(config.swUrl, { scope: config.scope || '/' })
       .then(function (registration) {
-        if (registration.waiting) {
-          showUpdateToast(registration.waiting);
+        // Only show if there is an active controller (so not initial install) AND a waiting worker
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          showUpdateToast(registration);
           return;
         }
 
@@ -79,8 +80,9 @@
           if (!newWorker) return;
 
           newWorker.addEventListener('statechange', function () {
+            // Must have an active controller to be a genuine update rather than initial load
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              showUpdateToast(newWorker);
+              showUpdateToast(registration);
             }
           });
         });
@@ -101,17 +103,36 @@
   /**
    * Show bottom glassmorphic update toast.
    */
-  function showUpdateToast(worker) {
-    const toast = document.getElementById('ntv-update-toast');
-    const updateBtn = document.getElementById('ntv-update-btn');
+  function showUpdateToast(registration) {
+    const toast = document.getElementById('ntv-sw-update-toast') || document.getElementById('ntv-update-toast');
+    const updateBtn = document.getElementById('ntv-sw-update-btn') || document.getElementById('ntv-update-btn');
     if (!toast || !updateBtn) return;
 
     toast.style.display = 'flex';
-    updateBtn.addEventListener('click', function () {
-      if (worker) {
-        worker.postMessage({ type: 'SKIP_WAITING' });
+    toast.classList.add('is-visible');
+
+    updateBtn.onclick = function (e) {
+      e.preventDefault();
+      toast.style.display = 'none';
+      toast.classList.remove('is-visible');
+
+      const waitingWorker = (registration && registration.waiting) ? registration.waiting : (navigator.serviceWorker.controller || null);
+      if (waitingWorker) {
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
       }
-    });
+
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          return Promise.all(names.map(function (name) {
+            return caches.delete(name);
+          }));
+        }).catch(function () {});
+      }
+
+      setTimeout(function () {
+        window.location.reload(true);
+      }, 250);
+    };
   }
 
   /**
@@ -122,7 +143,8 @@
       return;
     }
 
-    const storageKeyDismissed = 'ntv_pwa_dismissed_at';
+    const versionKey = (config.cacheVersion || '1.7.1').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const storageKeyDismissed = 'ntv_pwa_dismissed_' + versionKey;
     const dismissedAt = parseInt(localStorage.getItem(storageKeyDismissed) || '0', 10);
     if (dismissedAt) {
       const cooldownMs = (config.cooldownDays || 7) * 24 * 60 * 60 * 1000;
