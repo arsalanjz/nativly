@@ -111,8 +111,103 @@ class NTV_Settings {
 	 *
 	 * @return array<int, string> List of unique color hex codes.
 	 */
+	/**
+	 * Convert HEX color to HSL array.
+	 *
+	 * @param string $hex Hex color code.
+	 * @return array{h: float, s: float, l: float}
+	 */
+	public static function hex_to_hsl( $hex ) {
+		$hex = ltrim( (string) $hex, '#' );
+		if ( strlen( $hex ) === 3 ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+		if ( strlen( $hex ) !== 6 ) {
+			return array( 'h' => 220, 's' => 1.0, 'l' => 0.5 );
+		}
+		$r = hexdec( substr( $hex, 0, 2 ) ) / 255;
+		$g = hexdec( substr( $hex, 2, 2 ) ) / 255;
+		$b = hexdec( substr( $hex, 4, 2 ) ) / 255;
+
+		$max = max( $r, $g, $b );
+		$min = min( $r, $g, $b );
+		$d   = $max - $min;
+		$l   = ( $max + $min ) / 2;
+		$h   = 0;
+		$s   = 0;
+
+		if ( $d > 0.0001 ) {
+			$s = $l > 0.5 ? $d / ( 2 - $max - $min ) : $d / ( $max + $min );
+			if ( $max === $r ) {
+				$h = ( $g - $b ) / $d + ( $g < $b ? 6 : 0 );
+			} elseif ( $max === $g ) {
+				$h = ( $b - $r ) / $d + 2;
+			} else {
+				$h = ( $r - $g ) / $d + 4;
+			}
+			$h /= 6;
+		}
+
+		return array(
+			'h' => $h * 360,
+			's' => $s,
+			'l' => $l,
+		);
+	}
+
+	/**
+	 * Convert HSL to HEX color string.
+	 *
+	 * @param float $h Hue 0-360.
+	 * @param float $s Saturation 0-1.
+	 * @param float $l Lightness 0-1.
+	 * @return string Hex color code.
+	 */
+	public static function hsl_to_hex( $h, $s, $l ) {
+		$h = fmod( (float) $h, 360 );
+		if ( $h < 0 ) {
+			$h += 360;
+		}
+		$s = max( 0.0, min( 1.0, (float) $s ) );
+		$l = max( 0.0, min( 1.0, (float) $l ) );
+
+		$c = ( 1 - abs( 2 * $l - 1 ) ) * $s;
+		$x = $c * ( 1 - abs( fmod( $h / 60, 2 ) - 1 ) );
+		$m = $l - $c / 2;
+
+		$r = 0;
+		$g = 0;
+		$b = 0;
+
+		if ( $h < 60 ) {
+			$r = $c; $g = $x; $b = 0;
+		} elseif ( $h < 120 ) {
+			$r = $x; $g = $c; $b = 0;
+		} elseif ( $h < 180 ) {
+			$r = 0; $g = $c; $b = $x;
+		} elseif ( $h < 240 ) {
+			$r = 0; $g = $x; $b = $c;
+		} elseif ( $h < 300 ) {
+			$r = $x; $g = 0; $b = $c;
+		} else {
+			$r = $c; $g = 0; $b = $x;
+		}
+
+		$r_int = (int) round( ( $r + $m ) * 255 );
+		$g_int = (int) round( ( $g + $m ) * 255 );
+		$b_int = (int) round( ( $b + $m ) * 255 );
+
+		return sprintf( '#%02X%02X%02X', $r_int, $g_int, $b_int );
+	}
+
+	/**
+	 * Retrieve site theme color palette (first 3 colors) plus 2 smart harmonious suggested colors.
+	 * Extracts from Kadence Theme (palette1, palette2, palette3), Child themes, FSE, Astra, and Elementor.
+	 *
+	 * @return array<int, array{color: string, type: string, label: string}> List of 5 color definitions.
+	 */
 	public static function get_site_palette() {
-		$palette = array();
+		$theme_colors = array();
 
 		// 1. Kadence Theme / Child Theme global palette.
 		// Kadence stores palette in option 'kadence_global_palette' or theme_mods as JSON string.
@@ -136,127 +231,142 @@ class NTV_Settings {
 					$palette_list = $decoded;
 				}
 
+				// Extract the first 3 colors (palette1, palette2, palette3) in exact order without skipping palette3.
+				// Only skip pure white / near-white background slots (palette7-palette9).
 				foreach ( $palette_list as $item ) {
+					$c = '';
 					if ( is_array( $item ) && ! empty( $item['color'] ) ) {
-						$palette[] = sanitize_hex_color( $item['color'] );
+						$c = sanitize_hex_color( $item['color'] );
 					} elseif ( is_string( $item ) ) {
-						$palette[] = sanitize_hex_color( $item );
+						$c = sanitize_hex_color( $item );
+					}
+					if ( $c ) {
+						$upper = strtoupper( $c );
+						if ( ! in_array( $upper, array( '#FFFFFF', '#FFF', '#F7FAFC', '#FAFAFA' ), true ) ) {
+							if ( ! in_array( $upper, $theme_colors, true ) ) {
+								$theme_colors[] = $upper;
+							}
+						}
+					}
+					if ( count( $theme_colors ) >= 3 ) {
+						break;
 					}
 				}
 			}
 		}
 
-		// 2. Active Child Theme & Parent Theme style.css / functions.php CSS custom properties.
-		$css_paths = array();
-		if ( function_exists( 'get_stylesheet_directory' ) ) {
-			$css_paths[] = get_stylesheet_directory() . '/style.css';
-		}
-		if ( function_exists( 'get_template_directory' ) && get_template_directory() !== get_stylesheet_directory() ) {
-			$css_paths[] = get_template_directory() . '/style.css';
-		}
+		// 2. Active Child Theme & Parent Theme style.css / functions.php CSS custom properties if needed.
+		if ( count( $theme_colors ) < 3 ) {
+			$css_paths = array();
+			if ( function_exists( 'get_stylesheet_directory' ) ) {
+				$css_paths[] = get_stylesheet_directory() . '/style.css';
+			}
+			if ( function_exists( 'get_template_directory' ) && get_template_directory() !== get_stylesheet_directory() ) {
+				$css_paths[] = get_template_directory() . '/style.css';
+			}
 
-		foreach ( $css_paths as $css_path ) {
-			if ( file_exists( $css_path ) && is_readable( $css_path ) ) {
-				$css_content = file_get_contents( $css_path, false, null, 0, 40000 );
-				if ( ! empty( $css_content ) ) {
-					// Match Kadence & standard theme custom properties: --global-palette1, --primary-color, --accent-color, etc.
-					if ( preg_match_all( '/--(?:global-palette\d?|primary|accent|brand|theme-color)[a-zA-Z0-9_-]*\s*:\s*(#[a-fA-F0-9]{3,8})/i', $css_content, $matches ) ) {
-						foreach ( $matches[1] as $hex ) {
-							$palette[] = sanitize_hex_color( $hex );
+			foreach ( $css_paths as $css_path ) {
+				if ( file_exists( $css_path ) && is_readable( $css_path ) ) {
+					$css_content = file_get_contents( $css_path, false, null, 0, 40000 );
+					if ( ! empty( $css_content ) ) {
+						if ( preg_match_all( '/--(?:global-palette\d?|primary|accent|brand|theme-color)[a-zA-Z0-9_-]*\s*:\s*(#[a-fA-F0-9]{3,8})/i', $css_content, $matches ) ) {
+							foreach ( $matches[1] as $hex ) {
+								$sanitized = sanitize_hex_color( $hex );
+								if ( $sanitized ) {
+									$upper = strtoupper( $sanitized );
+									if ( ! in_array( $upper, array( '#FFFFFF', '#FFF', '#F7FAFC' ), true ) && ! in_array( $upper, $theme_colors, true ) ) {
+										$theme_colors[] = $upper;
+									}
+								}
+								if ( count( $theme_colors ) >= 3 ) {
+									break 2;
+								}
+							}
 						}
 					}
 				}
 			}
 		}
 
-		// Also check theme_mods for any stored color hex values
-		$all_mods = get_theme_mods();
-		if ( ! empty( $all_mods ) && is_array( $all_mods ) ) {
-			foreach ( $all_mods as $mod_key => $mod_val ) {
-				if ( is_string( $mod_val ) && preg_match( '/^#[a-fA-F0-9]{3,8}$/', $mod_val ) ) {
-					if ( preg_match( '/(?:palette|primary|accent|brand|link_color)/i', $mod_key ) ) {
-						$palette[] = sanitize_hex_color( $mod_val );
+		// 3. Check theme_mods for any stored color hex values if needed.
+		if ( count( $theme_colors ) < 3 ) {
+			$all_mods = get_theme_mods();
+			if ( ! empty( $all_mods ) && is_array( $all_mods ) ) {
+				foreach ( $all_mods as $mod_key => $mod_val ) {
+					if ( is_string( $mod_val ) && preg_match( '/^#[a-fA-F0-9]{3,8}$/', $mod_val ) ) {
+						if ( preg_match( '/(?:palette|primary|accent|brand|link_color)/i', $mod_key ) ) {
+							$upper = strtoupper( sanitize_hex_color( $mod_val ) );
+							if ( $upper && ! in_array( $upper, array( '#FFFFFF', '#FFF', '#F7FAFC' ), true ) && ! in_array( $upper, $theme_colors, true ) ) {
+								$theme_colors[] = $upper;
+							}
+							if ( count( $theme_colors ) >= 3 ) {
+								break;
+							}
+						}
 					}
 				}
 			}
 		}
 
-		// 3. WP Block Theme / Full Site Editing (FSE) theme.json palette (custom then theme).
-		if ( function_exists( 'wp_get_global_settings' ) ) {
+		// 4. WP Block Theme / Full Site Editing (FSE) theme.json palette if needed.
+		if ( count( $theme_colors ) < 3 && function_exists( 'wp_get_global_settings' ) ) {
 			$fse_custom = wp_get_global_settings( array( 'color', 'palette', 'custom' ) );
 			if ( ! empty( $fse_custom ) && is_array( $fse_custom ) ) {
 				foreach ( $fse_custom as $c ) {
 					if ( ! empty( $c['color'] ) ) {
-						$palette[] = sanitize_hex_color( $c['color'] );
-					}
-				}
-			}
-			$fse_colors = wp_get_global_settings( array( 'color', 'palette', 'theme' ) );
-			if ( ! empty( $fse_colors ) && is_array( $fse_colors ) ) {
-				foreach ( $fse_colors as $c ) {
-					if ( ! empty( $c['color'] ) ) {
-						$palette[] = sanitize_hex_color( $c['color'] );
-					}
-				}
-			}
-		}
-
-		// 4. Astra Theme global palette.
-		$astra_palette = get_theme_mod( 'global-color-palette' );
-		if ( ! empty( $astra_palette ) && is_array( $astra_palette ) && ! empty( $astra_palette['palette'] ) ) {
-			foreach ( $astra_palette['palette'] as $color_val ) {
-				if ( is_string( $color_val ) ) {
-					$palette[] = sanitize_hex_color( $color_val );
-				}
-			}
-		}
-
-		// 5. Elementor Kit global colors.
-		$elementor_kit_id = get_option( 'elementor_active_kit' );
-		if ( $elementor_kit_id ) {
-			$kit_meta = get_post_meta( (int) $elementor_kit_id, '_elementor_page_settings', true );
-			if ( ! empty( $kit_meta['system_colors'] ) && is_array( $kit_meta['system_colors'] ) ) {
-				foreach ( $kit_meta['system_colors'] as $sc ) {
-					if ( ! empty( $sc['color'] ) ) {
-						$palette[] = sanitize_hex_color( $sc['color'] );
-					}
-				}
-			}
-			if ( ! empty( $kit_meta['custom_colors'] ) && is_array( $kit_meta['custom_colors'] ) ) {
-				foreach ( $kit_meta['custom_colors'] as $cc ) {
-					if ( ! empty( $cc['color'] ) ) {
-						$palette[] = sanitize_hex_color( $cc['color'] );
+						$upper = strtoupper( sanitize_hex_color( $c['color'] ) );
+						if ( $upper && ! in_array( $upper, array( '#FFFFFF', '#FFF', '#F7FAFC' ), true ) && ! in_array( $upper, $theme_colors, true ) ) {
+							$theme_colors[] = $upper;
+						}
+						if ( count( $theme_colors ) >= 3 ) {
+							break;
+						}
 					}
 				}
 			}
 		}
 
-		// Filter null/empty, uppercase, and make unique.
-		$palette = array_values( array_unique( array_filter( array_map( 'strtoupper', $palette ) ) ) );
+		// Fallback curated 3 primary/accent colors if none detected.
+		if ( empty( $theme_colors ) ) {
+			$theme_colors = array( '#0047FF', '#0096C7', '#4A4A4A' );
+		}
+		$theme_colors = array_slice( array_values( array_unique( $theme_colors ) ), 0, 3 );
 
-		// Skip pure neutrals/whites/grays when selecting accent colors.
-		$neutrals = array(
-			'#FFFFFF', '#FFF', '#000000', '#000',
-			'#F8F9FA', '#F9FAFB', '#F3F4F6', '#EEEEEE', '#E5E7EB', '#E2E8F0', '#CBD5E1', '#94A3B8', '#64748B',
-			'#121218', '#0F172A', '#1E293B', '#111827', '#18181B', '#27272A', '#3F3F46'
+		// 5. Smart Color Suggestion Engine (Colors #4 and #5) using HSL color harmony theory.
+		$primary_hex = ! empty( $theme_colors[0] ) ? $theme_colors[0] : '#0047FF';
+		$hsl         = self::hex_to_hsl( $primary_hex );
+
+		// Color 4: Warm / Complementary Accent (+160° hue shift).
+		$h_warm    = fmod( $hsl['h'] + 160, 360 );
+		$s_warm    = min( 0.95, max( 0.70, (float) $hsl['s'] ) );
+		$l_warm    = min( 0.58, max( 0.45, (float) $hsl['l'] ) );
+		$color_sug1 = self::hsl_to_hex( $h_warm, $s_warm, $l_warm );
+
+		// Color 5: Soft Analogous / Triadic Accent (+45° hue shift).
+		$h_analog   = fmod( $hsl['h'] + 45, 360 );
+		$s_analog   = min( 0.90, max( 0.65, (float) $hsl['s'] ) );
+		$l_analog   = min( 0.55, max( 0.42, (float) $hsl['l'] ) );
+		$color_sug2 = self::hsl_to_hex( $h_analog, $s_analog, $l_analog );
+
+		// Build final 5 color objects
+		$palette = array();
+		foreach ( $theme_colors as $tc ) {
+			$palette[] = array(
+				'color' => $tc,
+				'type'  => 'theme',
+				'label' => __( 'رنگ قالب', 'nativly' ),
+			);
+		}
+		$palette[] = array(
+			'color' => $color_sug1,
+			'type'  => 'suggested',
+			'label' => __( 'پیشنهاد هوشمند مکمل', 'nativly' ),
 		);
-		$accent_colors = array();
-		foreach ( $palette as $c ) {
-			if ( ! in_array( $c, $neutrals, true ) ) {
-				$accent_colors[] = $c;
-			}
-		}
-		if ( ! empty( $accent_colors ) ) {
-			$palette = $accent_colors;
-		}
-
-		// Limit to exactly 4 primary/accent colors.
-		$palette = array_slice( $palette, 0, 4 );
-
-		// Fallback curated 4 primary/accent colors if none detected.
-		if ( empty( $palette ) ) {
-			$palette = array( '#0047FF', '#6366F1', '#10B981', '#F59E0B' );
-		}
+		$palette[] = array(
+			'color' => $color_sug2,
+			'type'  => 'suggested',
+			'label' => __( 'پیشنهاد هوشمند مکمل', 'nativly' ),
+		);
 
 		return $palette;
 	}
@@ -902,8 +1012,21 @@ class NTV_Settings {
 											<input type="text" name="ntv_settings[active_pill_bg]" id="ntv-active-pill-bg" value="<?php echo esc_attr( $settings['active_pill_bg'] ); ?>" class="ntv-color-picker" data-default-color="#0047FF">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php foreach ( $site_palette as $hex_color ) : ?>
-												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php
+											foreach ( $site_palette as $p_item ) :
+												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
+												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+												$is_suggested = ( 'suggested' === $color_type );
+												$swatch_title = $is_suggested
+													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
+													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
+												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
+												?>
+												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
+													<?php if ( $is_suggested ) : ?>
+														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
+													<?php endif; ?>
+												</button>
 											<?php endforeach; ?>
 										</div>
 									</div>
@@ -917,8 +1040,21 @@ class NTV_Settings {
 											<input type="text" name="ntv_settings[active_text_color]" id="ntv-active-text-color" value="<?php echo esc_attr( $settings['active_text_color'] ); ?>" class="ntv-color-picker" data-default-color="#FFFFFF">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php foreach ( $site_palette as $hex_color ) : ?>
-												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php
+											foreach ( $site_palette as $p_item ) :
+												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
+												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+												$is_suggested = ( 'suggested' === $color_type );
+												$swatch_title = $is_suggested
+													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
+													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
+												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
+												?>
+												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
+													<?php if ( $is_suggested ) : ?>
+														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
+													<?php endif; ?>
+												</button>
 											<?php endforeach; ?>
 										</div>
 									</div>
@@ -930,16 +1066,29 @@ class NTV_Settings {
 										</div>
 										<div class="ntv-color-row-controls">
 											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_inactive['hex'] ); ?>" data-default-color="#FFFFFF">
-											<div class="ntv-opacity-slider-inline">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
 												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
 												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_inactive['opacity'] ); ?>">
-												<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_inactive['opacity'] ); ?>%</span>
+												<span class="ntv-opacity-val" id="ntv-inactive-opacity-val"><?php echo esc_html( (string) $parsed_inactive['opacity'] ); ?>%</span>
 											</div>
 											<input type="hidden" name="ntv_settings[inactive_icon_color]" id="ntv-inactive-icon-color" value="<?php echo esc_attr( $settings['inactive_icon_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php foreach ( $site_palette as $hex_color ) : ?>
-												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php
+											foreach ( $site_palette as $p_item ) :
+												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
+												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+												$is_suggested = ( 'suggested' === $color_type );
+												$swatch_title = $is_suggested
+													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
+													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
+												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
+												?>
+												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
+													<?php if ( $is_suggested ) : ?>
+														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
+													<?php endif; ?>
+												</button>
 											<?php endforeach; ?>
 										</div>
 									</div>
@@ -951,16 +1100,29 @@ class NTV_Settings {
 										</div>
 										<div class="ntv-color-row-controls">
 											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_bg['hex'] ); ?>" data-default-color="#121218">
-											<div class="ntv-opacity-slider-inline">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
 												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
 												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_bg['opacity'] ); ?>">
-												<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_bg['opacity'] ); ?>%</span>
+												<span class="ntv-opacity-val" id="ntv-bg-opacity-val"><?php echo esc_html( (string) $parsed_bg['opacity'] ); ?>%</span>
 											</div>
 											<input type="hidden" name="ntv_settings[glass_bg_color]" id="ntv-glass-bg-color" value="<?php echo esc_attr( $settings['glass_bg_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php foreach ( $site_palette as $hex_color ) : ?>
-												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php
+											foreach ( $site_palette as $p_item ) :
+												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
+												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+												$is_suggested = ( 'suggested' === $color_type );
+												$swatch_title = $is_suggested
+													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
+													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
+												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
+												?>
+												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
+													<?php if ( $is_suggested ) : ?>
+														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
+													<?php endif; ?>
+												</button>
 											<?php endforeach; ?>
 										</div>
 									</div>
@@ -972,16 +1134,29 @@ class NTV_Settings {
 										</div>
 										<div class="ntv-color-row-controls">
 											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_border['hex'] ); ?>" data-default-color="#FFFFFF">
-											<div class="ntv-opacity-slider-inline">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
 												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
 												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_border['opacity'] ); ?>">
-												<span class="ntv-opacity-val"><?php echo esc_html( (string) $parsed_border['opacity'] ); ?>%</span>
+												<span class="ntv-opacity-val" id="ntv-border-opacity-val"><?php echo esc_html( (string) $parsed_border['opacity'] ); ?>%</span>
 											</div>
 											<input type="hidden" name="ntv_settings[glass_border_color]" id="ntv-glass-border-color" value="<?php echo esc_attr( $settings['glass_border_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
-											<?php foreach ( $site_palette as $hex_color ) : ?>
-												<button type="button" class="ntv-inline-swatch" data-color="<?php echo esc_attr( $hex_color ); ?>" style="background-color: <?php echo esc_attr( $hex_color ); ?>;" title="<?php echo esc_attr( $hex_color ); ?>" aria-label="<?php echo esc_attr( $hex_color ); ?>"></button>
+											<?php
+											foreach ( $site_palette as $p_item ) :
+												$color_hex    = is_array( $p_item ) ? $p_item['color'] : $p_item;
+												$color_type   = is_array( $p_item ) && isset( $p_item['type'] ) ? $p_item['type'] : 'theme';
+												$is_suggested = ( 'suggested' === $color_type );
+												$swatch_title = $is_suggested
+													? sprintf( __( 'پیشنهاد هوشمند متناسب با پالت سایت شما: %s', 'nativly' ), $color_hex )
+													: sprintf( __( 'رنگ قالب: %s', 'nativly' ), $color_hex );
+												$swatch_class = $is_suggested ? 'ntv-inline-swatch ntv-swatch-suggested' : 'ntv-inline-swatch';
+												?>
+												<button type="button" class="<?php echo esc_attr( $swatch_class ); ?>" data-color="<?php echo esc_attr( $color_hex ); ?>" style="background-color: <?php echo esc_attr( $color_hex ); ?>;" title="<?php echo esc_attr( $swatch_title ); ?>" aria-label="<?php echo esc_attr( $swatch_title ); ?>">
+													<?php if ( $is_suggested ) : ?>
+														<span class="ntv-swatch-sparkle" aria-hidden="true">✦</span>
+													<?php endif; ?>
+												</button>
 											<?php endforeach; ?>
 										</div>
 									</div>
@@ -1380,17 +1555,17 @@ class NTV_Settings {
 									</div>
 								</div>
 
-								<!-- Live Expanding Navbar Inside Phone Mockup -->
-								<div id="ntv-preview-nav-root" class="ntv-mockup-nav-container ntv-glass-nav-container">
-									<!-- Bubble Popover in Mockup -->
-									<div id="ntv-mockup-bubble" class="ntv-bubble-popover ntv-mockup-bubble-popover" style="display:none;" aria-hidden="true">
-										<div class="ntv-bubble-glass-card">
-											<div class="ntv-bubble-grid" id="ntv-mockup-bubble-grid">
-												<!-- Injected dynamically via ntv-admin.js -->
-											</div>
+								<!-- Bubble Popover in Mockup -->
+								<div id="ntv-mockup-bubble-popover" class="ntv-bubble-popover ntv-mockup-bubble-popover" style="display:none;" aria-hidden="true">
+									<div class="ntv-bubble-glass-card">
+										<div class="ntv-bubble-grid" id="ntv-mockup-bubble-grid">
+											<!-- Injected dynamically via ntv-admin.js -->
 										</div>
 									</div>
+								</div>
 
+								<!-- Live Expanding Navbar Inside Phone Mockup -->
+								<div id="ntv-preview-nav-root" class="ntv-mockup-nav-container ntv-glass-nav-container">
 									<nav class="ntv-glass-nav" role="navigation">
 										<div class="ntv-nav-list" id="ntv-preview-nav-list">
 											<!-- Injected dynamically via ntv-admin.js -->

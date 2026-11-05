@@ -157,14 +157,38 @@
     });
 
     function dismissPrompt() {
-      if (installCard) installCard.style.display = 'none';
-      if (iosModal) iosModal.style.display = 'none';
+      if (installCard) {
+        installCard.classList.remove('is-visible');
+        installCard.setAttribute('aria-hidden', 'true');
+        installCard.style.display = 'none';
+      }
+      if (iosModal) {
+        iosModal.classList.remove('is-visible');
+        iosModal.setAttribute('aria-hidden', 'true');
+        iosModal.style.display = 'none';
+      }
       localStorage.setItem(storageKeyDismissed, Date.now().toString());
     }
+
+    function openIosModal() {
+      if (installCard) {
+        installCard.classList.remove('is-visible');
+        installCard.setAttribute('aria-hidden', 'true');
+        installCard.style.display = 'none';
+      }
+      if (iosModal) {
+        iosModal.classList.add('is-visible');
+        iosModal.setAttribute('aria-hidden', 'false');
+        iosModal.style.display = 'flex';
+      }
+    }
+
+    const iosGotItBtn = document.getElementById('ntv-ios-got-it-btn') || document.querySelector('.ntv-ios-got-it-btn');
 
     if (dismissBtn) dismissBtn.addEventListener('click', dismissPrompt);
     if (closeXBtn) closeXBtn.addEventListener('click', dismissPrompt);
     if (iosCloseBtn) iosCloseBtn.addEventListener('click', dismissPrompt);
+    if (iosGotItBtn && iosGotItBtn !== iosCloseBtn) iosGotItBtn.addEventListener('click', dismissPrompt);
 
     if (iosModal) {
       iosModal.addEventListener('click', function (e) {
@@ -179,30 +203,30 @@
     setTimeout(function () {
       if (!installCard) return;
 
-      // If deferredPrompt did not fire or device is iOS, show friendly instructions
+      // If deferredPrompt did not fire or device is iOS, show friendly instructions on banner
       if (!deferredPrompt || isIosSafari()) {
         if (installDesc) {
-          installDesc.textContent = 'برای نصب وب‌اپلیکیشن روی صفحه اصلی، دکمه Share / منوی مرورگر را زده و گزینه Add to Home Screen را انتخاب کنید';
+          installDesc.textContent = 'برای دسترسی سریع‌تر و تجربه روان‌تر، این اپلیکیشن را به صفحه اصلی خود اضافه کنید.';
         }
       }
 
+      installCard.classList.add('is-visible');
+      installCard.setAttribute('aria-hidden', 'false');
       installCard.style.display = 'block';
 
       if (confirmBtn) {
-        confirmBtn.onclick = function () {
+        confirmBtn.onclick = function (e) {
+          e.preventDefault();
           if (deferredPrompt) {
-            installCard.style.display = 'none';
+            dismissPrompt();
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then(function () {
               deferredPrompt = null;
             });
             localStorage.setItem(storageKeyDismissed, Date.now().toString());
-          } else if (isIosSafari()) {
-            installCard.style.display = 'none';
-            if (iosModal) iosModal.style.display = 'flex';
           } else {
-            alert('برای نصب این اپلیکیشن، منوی مرورگر را باز کرده و گزینه «افزودن به صفحه اصلی» (Add to Home screen) را انتخاب کنید.');
-            dismissPrompt();
+            // For iOS or browsers without native prompt, open the iOS 2-step visual modal
+            openIosModal();
           }
         };
       }

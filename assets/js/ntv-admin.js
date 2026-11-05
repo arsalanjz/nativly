@@ -1137,8 +1137,16 @@
         bubbleItemsHtml = '<p style="color:#94a3b8; font-size:11px; margin:8px auto; text-align:center; width:100%;">آیتمی در منوی حبابی وجود ندارد.</p>';
       }
       $('#ntv-mockup-bubble-grid').html(bubbleItemsHtml);
+      const mockupPopover = $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble');
+      mockupPopover.find('.ntv-bubble-glass-card').css({
+        'background': glassBg,
+        'border-color': glassBorder,
+        'border-radius': '18px',
+        'backdrop-filter': 'blur(' + blurPx + 'px)',
+        '-webkit-backdrop-filter': 'blur(' + blurPx + 'px)'
+      });
     } else {
-      $('#ntv-mockup-bubble').hide();
+      $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble').removeClass('is-open is-visible').attr('aria-hidden', 'true').hide();
     }
 
     previewList.html(itemsHtml);
@@ -1172,13 +1180,30 @@
         'color': textColor
       });
       $(this).find('.ntv-label').css({ 'color': textColor });
-      $('#ntv-mockup-bubble').fadeOut(150);
+      $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble').removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
+      $('#ntv-mockup-more-trigger').removeClass('is-open');
     });
 
     // Interactive Preview: Click More trigger to toggle bubble
     $('#ntv-mockup-more-trigger').off('click').on('click', function (e) {
       e.stopPropagation();
-      $('#ntv-mockup-bubble').fadeToggle(150);
+      const popover = $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble');
+      const isVisible = popover.is(':visible') || popover.hasClass('is-open');
+      if (isVisible) {
+        popover.removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
+        $(this).removeClass('is-open');
+      } else {
+        popover.addClass('is-open is-visible').attr('aria-hidden', 'false').fadeIn(150);
+        $(this).addClass('is-open');
+      }
+    });
+
+    // Close mockup bubble on outside click in phone screen
+    $('.ntv-phone-screen').off('click.ntvMockup').on('click.ntvMockup', function (e) {
+      if (!$(e.target).closest('#ntv-mockup-bubble-popover, #ntv-mockup-bubble, #ntv-mockup-more-trigger').length) {
+        $('#ntv-mockup-bubble-popover, #ntv-mockup-bubble').removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
+        $('#ntv-mockup-more-trigger').removeClass('is-open');
+      }
     });
   }
 

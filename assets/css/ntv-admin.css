@@ -1471,13 +1471,16 @@ input[type="range"].ntv-opacity-slider {
 
 .ntv-opacity-slider-inline .ntv-opacity-val,
 .ntv-opacity-control .ntv-opacity-val {
-  min-width: 42px !important;
+  background: #eef5ff !important;
+  color: #0066ff !important;
+  padding: 2px 8px !important;
+  border-radius: 6px !important;
   font-weight: 700 !important;
-  color: #0047FF !important;
   font-size: 12px !important;
-  text-align: left !important;
-  padding-left: 4px !important;
-  margin-inline-start: 4px !important;
+  min-width: 40px !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
 }
 
 /* Tab 2 Stacked Range Sliders */
@@ -1771,4 +1774,22 @@ input[type="range"].ntv-opacity-slider {
   direction: ltr;
   text-align: left;
   border: 1px solid #1E293B;
+}
+
+/* Smart Harmonious Suggested Swatches */
+.ntv-inline-swatch.ntv-swatch-suggested {
+  position: relative !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 0 0 1px rgba(0, 71, 255, 0.35) !important;
+}
+
+.ntv-inline-swatch.ntv-swatch-suggested .ntv-swatch-sparkle {
+  font-size: 9px !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
 }

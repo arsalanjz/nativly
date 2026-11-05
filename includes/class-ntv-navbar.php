@@ -307,6 +307,11 @@ class NTV_Navbar {
 		$css .= "#ntv-top-loader.is-done { width: 100% !important; opacity: 0 !important; transition: width 0.15s ease, opacity 0.35s ease 0.15s !important; }\n";
 		$css .= ".ntv-glass-bubble-popover, .ntv-bubble-popover { position: fixed !important; bottom: calc(var(--ntv-bottom-offset, 16px) + 74px + env(safe-area-inset-bottom, 0px)) !important; left: 50% !important; transform: translateX(-50%) translateY(12px) scale(0.95) !important; z-index: 2147483647 !important; width: max-content !important; min-width: 200px !important; max-width: calc(100vw - 32px) !important; padding: 12px !important; border-radius: 22px !important; background: var(--ntv-glass-bg, rgba(18, 18, 24, 0.88)) !important; backdrop-filter: blur(var(--ntv-glass-blur, 20px)) !important; -webkit-backdrop-filter: blur(var(--ntv-glass-blur, 20px)) !important; border: 1px solid var(--ntv-glass-border, rgba(255, 255, 255, 0.14)) !important; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35) !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transition: opacity 0.25s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.25s !important; }\n";
 		$css .= ".ntv-glass-bubble-popover.is-open, .ntv-glass-bubble-popover.is-visible, .ntv-bubble-popover.is-open, .ntv-bubble-popover.is-visible { display: block !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: translateX(-50%) translateY(0) scale(1) !important; }\n";
+		// PWA Install Prompt & iOS Guide Critical Rules
+		$css .= ".ntv-ios-guide-modal[aria-hidden='true'], .ntv-ios-guide-modal:not(.is-visible), .ntv-install-prompt-banner[aria-hidden='true'], .ntv-install-prompt-banner:not(.is-visible) { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }\n";
+		$css .= ".ntv-ios-modal-card, .ntv-install-card { background: rgba(18, 18, 28, 0.94) !important; backdrop-filter: blur(24px) !important; -webkit-backdrop-filter: blur(24px) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.16) !important; border-radius: 24px !important; padding: 24px 20px !important; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important; max-width: 360px !important; width: calc(100vw - 32px) !important; margin: auto !important; text-align: center !important; position: relative !important; }\n";
+		$css .= ".ntv-more-trigger:not(.is-active) .ntv-nav-label, .ntv-more-item:not(.is-active) .ntv-nav-label, .ntv-more-trigger:not(.is-active) .ntv-label, .ntv-more-item:not(.is-active) .ntv-label { display: none !important; max-width: 0 !important; opacity: 0 !important; overflow: hidden !important; }\n";
+		$css .= ".ntv-more-trigger.is-open:not(.is-active) { background: rgba(255, 255, 255, 0.12) !important; color: #FFFFFF !important; }\n";
 
 		// View transitions feature.
 		if ( ! empty( $settings['enable_view_transitions'] ) ) {
@@ -719,7 +724,7 @@ class NTV_Navbar {
 
 					<?php if ( $enable_more_menu && ! empty( $more_items ) ) : ?>
 						<?php
-						$more_btn_classes = array( 'ntv-nav-item', 'ntv-more-trigger' );
+						$more_btn_classes = array( 'ntv-nav-item', 'ntv-more-trigger', 'ntv-more-item' );
 						if ( $is_more_active ) {
 							$more_btn_classes[] = 'is-active';
 						}

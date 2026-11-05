@@ -154,29 +154,57 @@
       const targetUrl = new URL(urlStr, window.location.origin);
       const targetPath = targetUrl.pathname.replace(/\/+$/, '') || '/';
 
-      const navItems = document.querySelectorAll('.ntv-nav-item, .ntv-bubble-item');
-      let matched = false;
+      const mainNavItems = document.querySelectorAll('.ntv-nav-item:not(.ntv-more-trigger)');
+      const bubbleItems = document.querySelectorAll('.ntv-bubble-item');
+      const moreTrigger = document.getElementById('ntv-more-trigger');
 
-      navItems.forEach(function (item) {
-        if (item.classList.contains('ntv-more-trigger')) {
-          return;
-        }
+      let bubbleMatched = false;
+      let mainMatched = false;
 
+      bubbleItems.forEach(function (item) {
         const href = item.getAttribute('href');
         if (!href) return;
-
         const itemUrl = new URL(href, window.location.origin);
         const itemPath = itemUrl.pathname.replace(/\/+$/, '') || '/';
-
         if (itemPath === targetPath) {
           item.classList.add('is-active');
           item.setAttribute('aria-current', 'page');
-          matched = true;
+          bubbleMatched = true;
         } else {
           item.classList.remove('is-active');
           item.removeAttribute('aria-current');
         }
       });
+
+      if (bubbleMatched) {
+        if (moreTrigger) {
+          moreTrigger.classList.add('is-active');
+          moreTrigger.setAttribute('aria-current', 'page');
+        }
+        mainNavItems.forEach(function (item) {
+          item.classList.remove('is-active');
+          item.removeAttribute('aria-current');
+        });
+      } else {
+        if (moreTrigger) {
+          moreTrigger.classList.remove('is-active');
+          moreTrigger.removeAttribute('aria-current');
+        }
+        mainNavItems.forEach(function (item) {
+          const href = item.getAttribute('href');
+          if (!href) return;
+          const itemUrl = new URL(href, window.location.origin);
+          const itemPath = itemUrl.pathname.replace(/\/+$/, '') || '/';
+          if (!mainMatched && itemPath === targetPath) {
+            item.classList.add('is-active');
+            item.setAttribute('aria-current', 'page');
+            mainMatched = true;
+          } else {
+            item.classList.remove('is-active');
+            item.removeAttribute('aria-current');
+          }
+        });
+      }
     } catch (e) {
       // Quiet fail
     }
@@ -280,7 +308,7 @@
       bubblePopover.style.display = 'block';
       bubblePopover.setAttribute('aria-hidden', 'false');
       moreTrigger.setAttribute('aria-expanded', 'true');
-      moreTrigger.classList.add('is-active', 'is-open');
+      moreTrigger.classList.add('is-open');
     }
 
     function closeBubblePopover() {
@@ -289,8 +317,16 @@
       bubblePopover.style.display = 'none';
       bubblePopover.setAttribute('aria-hidden', 'true');
       moreTrigger.setAttribute('aria-expanded', 'false');
-      moreTrigger.classList.remove('is-active', 'is-open');
+      moreTrigger.classList.remove('is-open');
     }
+
+    // Close popover when clicking any bubble item link
+    const bubbleLinks = document.querySelectorAll('.ntv-bubble-item');
+    bubbleLinks.forEach(function (link) {
+      link.addEventListener('click', function () {
+        closeBubblePopover();
+      });
+    });
 
     // Attach More popover trigger
     if (moreTrigger && bubblePopover) {

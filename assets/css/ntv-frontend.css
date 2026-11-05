@@ -260,6 +260,31 @@
   border: none;
   outline: none;
   font-family: inherit;
+  transition: background-color 0.2s ease, transform 0.15s ease !important;
+}
+
+.ntv-more-trigger:not(.is-active) .ntv-nav-label,
+.ntv-more-item:not(.is-active) .ntv-nav-label,
+.ntv-more-trigger:not(.is-active) .ntv-label,
+.ntv-more-item:not(.is-active) .ntv-label {
+  display: none !important;
+  max-width: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+}
+
+.ntv-more-trigger.is-open:not(.is-active) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+.ntv-more-trigger.is-active .ntv-nav-label,
+.ntv-more-item.is-active .ntv-nav-label,
+.ntv-more-trigger.is-active .ntv-label,
+.ntv-more-item.is-active .ntv-label {
+  display: inline-block !important;
+  opacity: 1 !important;
+  max-width: 140px !important;
 }
 
 /* ==========================================================================
@@ -772,4 +797,47 @@
   border-radius: 6px !important;
   font-size: 11px !important;
   color: #FFFFFF !important;
+}
+
+/* Nativly PWA & iOS Visual Modal High-Contrast Styling */
+.ntv-ios-guide-modal[aria-hidden='true'],
+.ntv-ios-guide-modal:not(.is-visible),
+.ntv-install-prompt-banner[aria-hidden='true'],
+.ntv-install-prompt-banner:not(.is-visible) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.ntv-ios-modal-card,
+.ntv-install-card {
+  background: rgba(18, 18, 28, 0.94) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 24px !important;
+  padding: 24px 20px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+  max-width: 360px !important;
+  width: calc(100vw - 32px) !important;
+  margin: auto !important;
+  text-align: center !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+.ntv-ios-step {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+  margin-bottom: 10px !important;
+  text-align: right !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
 }
