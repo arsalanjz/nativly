@@ -231,60 +231,28 @@ class NTV_Settings {
 					$palette_list = $decoded;
 				}
 
-				$all_raw_colors = array();
-				foreach ( $palette_list as $item ) {
-					$c = '';
+				if ( is_array( $palette_list ) && ! empty( $palette_list ) ) {
+					// Kadence Palette: Extract the exact first 3 items by index (0, 1, 2 — i.e., palette1, palette2, palette3) AS-IS without filtering!
+					$palette_items   = array_values( $palette_list );
+					$kadence_first_3 = array();
+					$count           = count( $palette_items );
+					for ( $i = 0; $i < 3 && $i < $count; $i++ ) {
+						$item = $palette_items[ $i ];
+						$c    = '';
 					if ( is_array( $item ) && ! empty( $item['color'] ) ) {
 						$c = sanitize_hex_color( $item['color'] );
 					} elseif ( is_string( $item ) ) {
 						$c = sanitize_hex_color( $item );
 					}
 					if ( $c ) {
-						$upper = strtoupper( $c );
-						if ( ! in_array( $upper, array( '#FFFFFF', '#FFF', '#F7FAFC', '#FAFAFA' ), true ) ) {
-							$all_raw_colors[] = $upper;
-						}
+						$kadence_first_3[] = strtoupper( $c );
 					}
 				}
 
-				if ( ! empty( $all_raw_colors ) ) {
-					// 1st accent (palette1)
-					if ( isset( $all_raw_colors[0] ) ) {
-						$theme_colors[] = $all_raw_colors[0];
-					}
-					// 2nd accent (palette2)
-					if ( isset( $all_raw_colors[1] ) && ! in_array( $all_raw_colors[1], $theme_colors, true ) ) {
-						$theme_colors[] = $all_raw_colors[1];
-					}
-
-					// 3rd color: Look for #4A4A4A or dark charcoal first; if not found, scan slots starting from index 2
-					// and pick the user's custom accent while avoiding dark navy (#1a202c/#0f172a) and light backgrounds.
-					$third_color = '';
-					foreach ( $all_raw_colors as $rc ) {
-						if ( '#4A4A4A' === $rc ) {
-							$third_color = '#4A4A4A';
-							break;
-						}
-					}
-					if ( empty( $third_color ) && count( $all_raw_colors ) > 2 ) {
-						$dark_navies = array( '#1A202C', '#0F172A', '#1E293B', '#111827', '#2B374A', '#0D1117' );
-						$light_grays = array( '#FFFFFF', '#FFF', '#F7FAFC', '#FAFAFA', '#F1F5F9', '#E2E8F0', '#EDF2F7' );
-						for ( $i = 2; $i < count( $all_raw_colors ); $i++ ) {
-							$cand = $all_raw_colors[ $i ];
-							if ( in_array( $cand, $dark_navies, true ) || in_array( $cand, $light_grays, true ) || in_array( $cand, $theme_colors, true ) ) {
-								continue;
-							}
-							$third_color = $cand;
-							break;
-						}
-					}
-					if ( empty( $third_color ) ) {
-						$third_color = '#4A4A4A';
-					}
-					if ( ! in_array( $third_color, $theme_colors, true ) ) {
-						$theme_colors[] = $third_color;
-					}
+				if ( ! empty( $kadence_first_3 ) ) {
+					$theme_colors = $kadence_first_3;
 				}
+			}
 			}
 		}
 
@@ -363,7 +331,7 @@ class NTV_Settings {
 		if ( empty( $theme_colors ) ) {
 			$theme_colors = array( '#0047FF', '#0096C7', '#4A4A4A' );
 		}
-		$theme_colors = array_slice( array_values( array_unique( $theme_colors ) ), 0, 3 );
+		$theme_colors = array_slice( $theme_colors, 0, 3 );
 
 		// 5. Smart Color Suggestion Engine (Colors #4 and #5) using HSL color harmony theory.
 		$primary_hex = ! empty( $theme_colors[0] ) ? $theme_colors[0] : '#00A8E8';

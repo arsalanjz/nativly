@@ -1199,14 +1199,16 @@
         popover.removeClass('is-open is-visible').attr('aria-hidden', 'true').fadeOut(150);
         $(this).removeClass('is-open').css({
           'background': 'transparent',
-          'color': inactiveColor
+          'color': inactiveColor,
+          'border-radius': '999px'
         });
         $(this).find('svg').css({ 'stroke': inactiveColor, 'color': inactiveColor });
       } else {
         popover.addClass('is-open is-visible').attr('aria-hidden', 'false').fadeIn(150);
         $(this).addClass('is-open').css({
           'background': pillBg,
-          'color': textColor
+          'color': textColor,
+          'border-radius': '999px'
         });
         $(this).find('svg').css({ 'stroke': textColor, 'color': textColor });
       }

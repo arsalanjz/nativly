@@ -595,7 +595,8 @@
   background: #0F172A;
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: relative !important;
+  overflow: hidden !important;
   box-sizing: border-box;
 }
 
@@ -733,12 +734,25 @@
 }
 
 /* Mockup Bubble Popover */
+.ntv-phone-screen .ntv-glass-bubble-popover,
+.ntv-phone-screen #ntv-mockup-bubble-popover,
+.ntv-phone-screen #ntv-glass-bubble-popover,
 .ntv-mockup-bubble-popover {
-  position: absolute;
-  bottom: 74px;
-  left: 12px;
-  right: 12px;
-  z-index: 20;
+  position: absolute !important;
+  bottom: 84px !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) translateY(0) scale(1) !important;
+  width: calc(100% - 28px) !important;
+  max-width: 240px !important;
+  z-index: 50 !important;
+}
+
+.ntv-phone-screen .ntv-more-item .ntv-nav-link,
+.ntv-phone-screen .ntv-more-item,
+.ntv-phone-screen .ntv-more-trigger-item,
+.ntv-phone-screen #ntv-mockup-more-trigger {
+  border-radius: 999px !important;
 }
 
 .ntv-bubble-glass-card {
@@ -1419,8 +1433,8 @@
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 14px !important;
-  flex-wrap: wrap !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
   position: relative !important;
 }
 
@@ -1443,8 +1457,11 @@
   align-items: center !important;
   justify-content: space-between !important;
   gap: 8px !important;
-  min-width: 240px !important;
+  flex: 1 !important;
   width: auto !important;
+  max-width: none !important;
+  margin: 0 8px !important;
+  min-width: 180px !important;
   background: #FFFFFF !important;
   padding: 6px 12px !important;
   border-radius: 8px !important;

@@ -1,5 +1,5 @@
 /**
- * Nativly - PWA Service Worker Registration, Update Toast & Smart Install Prompt
+ * Nativly - PWA Service Worker Registration & Smart Install Prompt
  * Author: Arsalan Jabarzare
  */
 
@@ -60,7 +60,7 @@
   window.ntvIncrementPageView = incrementPageView;
 
   /**
-   * Service Worker Registration & Update Toast Handler
+   * Service Worker Registration (silent background updates)
    */
   function initServiceWorker() {
     if (!('serviceWorker' in navigator) || !config.swUrl) {
@@ -68,25 +68,6 @@
     }
 
     navigator.serviceWorker.register(config.swUrl, { scope: config.scope || '/' })
-      .then(function (registration) {
-        // Only show if there is an active controller (so not initial install) AND a waiting worker
-        if (registration.waiting && navigator.serviceWorker.controller) {
-          showUpdateToast(registration);
-          return;
-        }
-
-        registration.addEventListener('updatefound', function () {
-          const newWorker = registration.installing;
-          if (!newWorker) return;
-
-          newWorker.addEventListener('statechange', function () {
-            // Must have an active controller to be a genuine update rather than initial load
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              showUpdateToast(registration);
-            }
-          });
-        });
-      })
       .catch(function (err) {
         console.warn('[Nativly] SW Registration error:', err);
       });
@@ -101,41 +82,6 @@
   }
 
   /**
-   * Show bottom glassmorphic update toast.
-   */
-  function showUpdateToast(registration) {
-    const toast = document.getElementById('ntv-sw-update-toast') || document.getElementById('ntv-update-toast');
-    const updateBtn = document.getElementById('ntv-sw-update-btn') || document.getElementById('ntv-update-btn');
-    if (!toast || !updateBtn) return;
-
-    toast.style.display = 'flex';
-    toast.classList.add('is-visible');
-
-    updateBtn.onclick = function (e) {
-      e.preventDefault();
-      toast.style.display = 'none';
-      toast.classList.remove('is-visible');
-
-      const waitingWorker = (registration && registration.waiting) ? registration.waiting : (navigator.serviceWorker.controller || null);
-      if (waitingWorker) {
-        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-      }
-
-      if ('caches' in window) {
-        caches.keys().then(function (names) {
-          return Promise.all(names.map(function (name) {
-            return caches.delete(name);
-          }));
-        }).catch(function () {});
-      }
-
-      setTimeout(function () {
-        window.location.reload(true);
-      }, 250);
-    };
-  }
-
-  /**
    * Smart Install Prompt Engine (Android, iOS & Mobile Viewports)
    */
   function initInstallPrompt() {
@@ -143,7 +89,7 @@
       return;
     }
 
-    const versionKey = (config.cacheVersion || '1.7.1').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const versionKey = (config.cacheVersion || '1.8.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
     const storageKeyDismissed = 'ntv_pwa_dismissed_' + versionKey;
     const dismissedAt = parseInt(localStorage.getItem(storageKeyDismissed) || '0', 10);
     if (dismissedAt) {

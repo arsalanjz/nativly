@@ -370,8 +370,9 @@ const BUILTIN_OFFLINE_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Install Event: Cache essential root entry
+// Install Event: Cache essential root entry and immediately skip waiting
 self.addEventListener('install', (event) => {
+	self.skipWaiting();
 	event.waitUntil(
 		caches.open(CACHE_NAME).then((cache) => {
 			return cache.addAll(PRECACHE_ASSETS).catch((err) => {
@@ -689,15 +690,8 @@ function pruneCache(cache, maxItems) {
 
 		$dir_attr = is_rtl() ? 'rtl' : 'ltr';
 		?>
-		<!-- Nativly PWA Update Toast & Install Prompt Shell -->
+		<!-- Nativly PWA Install Prompt Shell -->
 		<div id="ntv-pwa-toast-container" class="ntv-pwa-container" dir="<?php echo esc_attr( $dir_attr ); ?>">
-			<!-- SW Update Ready Toast -->
-			<div id="ntv-sw-update-toast" class="ntv-glass-toast ntv-sw-update-toast" style="display: none;" role="alert">
-				<span class="ntv-toast-icon">✨</span>
-				<span class="ntv-toast-text ntv-sw-toast-text"><?php esc_html_e( 'نسخه جدید آماده است — بروزرسانی', 'nativly' ); ?></span>
-				<button id="ntv-sw-update-btn" class="ntv-toast-action ntv-sw-update-btn" type="button"><?php esc_html_e( 'بروزرسانی', 'nativly' ); ?></button>
-			</div>
-
 			<!-- Android / Chromium / Mobile Install Card -->
 			<div id="ntv-install-card" class="ntv-glass-install-card ntv-install-prompt-banner ntv-install-card" style="display: none;" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="ntv-install-title">
 				<button id="ntv-install-close-x" class="ntv-install-close-x" type="button" aria-label="<?php esc_attr_e( 'بستن', 'nativly' ); ?>">&times;</button>

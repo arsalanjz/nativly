@@ -280,11 +280,31 @@ class NTV_Navbar {
 		$css .= "}\n";
 
 		// Full Inline Critical CSS (Perfmatters / LiteSpeed RUCSS instant rendering).
-		$css .= "@media (max-width: 1023px) { body { padding-bottom: var(--ntv-body-padding, 85px) !important; } }\n";
+		$desktop_position = isset( $settings['desktop_position'] ) ? $settings['desktop_position'] : 'hidden';
+
+		if ( 'hidden' === $desktop_position ) {
+			$css .= "@media (max-width: 768px) { body { padding-bottom: var(--ntv-body-padding, 85px) !important; } }\n";
+		} else {
+			$css .= "body { padding-bottom: var(--ntv-body-padding, 85px) !important; }\n";
+		}
 		$css .= ".ntv-glass-nav-container { position: fixed !important; bottom: var(--ntv-bottom-offset, 16px) !important; left: 50% !important; transform: translateX(-50%) !important; z-index: 2147483647 !important; display: flex !important; justify-content: center !important; align-items: center !important; opacity: 1 !important; visibility: visible !important; box-sizing: border-box !important; pointer-events: none !important; width: auto; max-width: 100%; }\n";
 		$css .= ".ntv-glass-nav-container.ntv-desktop-hidden { display: none !important; }\n";
-		$css .= "@media (max-width: 1023px) { .ntv-glass-nav-container.ntv-desktop-hidden { display: flex !important; } }\n";
-		$css .= "@media (min-width: 1024px) { .ntv-glass-nav-container.ntv-desktop-top { top: var(--ntv-bottom-offset, 16px) !important; bottom: auto !important; } .ntv-glass-nav-container.ntv-desktop-bottom { bottom: var(--ntv-bottom-offset, 16px) !important; top: auto !important; } }\n";
+		$css .= "@media (max-width: 768px) { .ntv-glass-nav-container.ntv-desktop-hidden { display: flex !important; } }\n";
+
+		// Desktop Display & Protection (min-width: 769px)
+		if ( 'hidden' === $desktop_position ) {
+			$css .= "@media (min-width: 769px) {\n";
+			$css .= "\t.ntv-glass-nav-container, #ntv-glass-navbar, #ntv-glass-bubble-popover, .ntv-glass-bubble-popover, .ntv-bubble-popover, #ntv-install-prompt-banner, .ntv-install-prompt-banner, #ntv-install-card, .ntv-glass-install-card, #ntv-ios-guide-modal, #ntv-ios-modal-backdrop, .ntv-ios-backdrop, .ntv-pwa-container, #ntv-pwa-toast-container {\n";
+			$css .= "\t\tdisplay: none !important;\n";
+			$css .= "\t\tvisibility: hidden !important;\n";
+			$css .= "\t\topacity: 0 !important;\n";
+			$css .= "\t\tpointer-events: none !important;\n";
+			$css .= "\t}\n";
+			$css .= "}\n";
+		} else {
+			$css .= "@media (min-width: 769px) { .ntv-glass-nav-container.ntv-desktop-top { top: var(--ntv-bottom-offset, 16px) !important; bottom: auto !important; } .ntv-glass-nav-container.ntv-desktop-bottom { bottom: var(--ntv-bottom-offset, 16px) !important; top: auto !important; } }\n";
+			$css .= "@media (min-width: 769px) { #ntv-install-prompt-banner, .ntv-install-prompt-banner, #ntv-install-card, .ntv-glass-install-card, #ntv-ios-guide-modal, #ntv-ios-modal-backdrop, .ntv-ios-backdrop, .ntv-pwa-container, #ntv-pwa-toast-container { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; } }\n";
+		}
 		$css .= ".ntv-glass-nav-container.ntv-width-auto { width: auto; max-width: calc(100vw - 32px); }\n";
 		$css .= ".ntv-glass-nav-container.ntv-width-full { width: calc(100% - 24px) !important; max-width: 600px; }\n";
 		$css .= ".ntv-glass-nav-container.ntv-width-full .ntv-glass-nav { width: 100% !important; }\n";
@@ -317,9 +337,9 @@ class NTV_Navbar {
 		$css .= ".ntv-more-item.is-open svg, .ntv-more-item.is-active svg, #ntv-more-trigger.is-open svg, #ntv-more-trigger.is-active svg, .ntv-more-trigger.is-open svg, .ntv-more-trigger.is-active svg { color: var(--ntv-active-text, #FFFFFF) !important; stroke: var(--ntv-active-text, #FFFFFF) !important; }\n";
 		$css .= ".ntv-more-item.is-open:not(.is-active) .ntv-nav-label, #ntv-more-trigger.is-open:not(.is-active) .ntv-nav-label, .ntv-more-trigger.is-open:not(.is-active) .ntv-nav-label { display: none !important; max-width: 0 !important; opacity: 0 !important; overflow: hidden !important; }\n";
 		$css .= ".ntv-bubble-item { color: var(--ntv-inactive-icon, var(--ntv-inactive-color, rgba(255, 255, 255, 0.75))) !important; }\n";
-		$css .= ".ntv-glass-toast, #ntv-sw-update-toast, #ntv-update-toast { background: var(--ntv-glass-bg, rgba(18, 18, 24, 0.92)) !important; border: 1px solid var(--ntv-glass-border, rgba(255, 255, 255, 0.16)) !important; color: var(--ntv-inactive-icon, var(--ntv-inactive-color, #FFFFFF)) !important; }\n";
+		$css .= ".ntv-glass-toast, #ntv-update-toast { background: var(--ntv-glass-bg, rgba(18, 18, 24, 0.92)) !important; border: 1px solid var(--ntv-glass-border, rgba(255, 255, 255, 0.16)) !important; color: var(--ntv-inactive-icon, var(--ntv-inactive-color, #FFFFFF)) !important; }\n";
 		$css .= ".ntv-toast-text, .ntv-sw-toast-text { color: var(--ntv-inactive-icon, var(--ntv-inactive-color, #FFFFFF)) !important; }\n";
-		$css .= "#ntv-sw-update-btn, #ntv-update-btn, .ntv-toast-action { background: var(--ntv-active-pill-bg, var(--ntv-active-bg, #0047FF)) !important; color: var(--ntv-active-text, #FFFFFF) !important; }\n";
+		$css .= "#ntv-update-btn, .ntv-toast-action { background: var(--ntv-active-pill-bg, var(--ntv-active-bg, #0047FF)) !important; color: var(--ntv-active-text, #FFFFFF) !important; }\n";
 
 		// View transitions feature.
 		if ( ! empty( $settings['enable_view_transitions'] ) ) {

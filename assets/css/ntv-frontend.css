@@ -51,10 +51,26 @@
   box-sizing: border-box;
 }
 
-/* Desktop Positioning */
-@media (min-width: 1024px) {
-  .ntv-glass-nav-container.ntv-desktop-hidden {
+/* Desktop Positioning & Protection (min-width: 769px) */
+@media (min-width: 769px) {
+  .ntv-desktop-hidden,
+  .ntv-glass-nav-container.ntv-desktop-hidden,
+  .ntv-glass-nav-container.ntv-desktop-hidden #ntv-glass-navbar,
+  .ntv-glass-nav-container.ntv-desktop-hidden #ntv-glass-bubble-popover,
+  .ntv-desktop-hidden .ntv-glass-bubble-popover,
+  .ntv-pwa-container,
+  #ntv-pwa-toast-container,
+  #ntv-install-card,
+  .ntv-glass-install-card,
+  .ntv-install-prompt-banner,
+  #ntv-install-prompt-banner,
+  #ntv-ios-guide-modal,
+  #ntv-ios-modal-backdrop,
+  .ntv-ios-backdrop {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   .ntv-glass-nav-container.ntv-desktop-top {
@@ -604,7 +620,6 @@
 }
 
 .ntv-toast-action,
-#ntv-sw-update-btn,
 #ntv-update-btn {
   background: var(--ntv-active-pill-bg, var(--ntv-active-bg, #0047FF)) !important;
   color: var(--ntv-active-text, #FFFFFF) !important;
