@@ -89,7 +89,7 @@
       return;
     }
 
-    const versionKey = (config.cacheVersion || '1.8.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const versionKey = (config.cacheVersion || '1.9.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
     const storageKeyDismissed = 'ntv_pwa_dismissed_' + versionKey;
     const dismissedAt = parseInt(localStorage.getItem(storageKeyDismissed) || '0', 10);
     if (dismissedAt) {
@@ -115,7 +115,7 @@
     const confirmBtn = document.getElementById('ntv-install-confirm-btn');
     const dismissBtn = document.getElementById('ntv-install-dismiss-btn');
     const closeXBtn = document.getElementById('ntv-install-close-x');
-    const iosModal = document.getElementById('ntv-ios-modal-backdrop');
+    const iosModal = document.getElementById('ntv-ios-modal-backdrop') || document.getElementById('ntv-ios-guide-modal') || document.querySelector('.ntv-ios-guide-modal');
     const iosCloseBtn = document.getElementById('ntv-ios-close-btn');
 
     // Chromium beforeinstallprompt event

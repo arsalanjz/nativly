@@ -232,27 +232,60 @@ class NTV_Settings {
 				}
 
 				if ( is_array( $palette_list ) && ! empty( $palette_list ) ) {
-					// Kadence Palette: Extract the exact first 3 items by index (0, 1, 2 — i.e., palette1, palette2, palette3) AS-IS without filtering!
-					$palette_items   = array_values( $palette_list );
-					$kadence_first_3 = array();
-					$count           = count( $palette_items );
-					for ( $i = 0; $i < 3 && $i < $count; $i++ ) {
-						$item = $palette_items[ $i ];
-						$c    = '';
-					if ( is_array( $item ) && ! empty( $item['color'] ) ) {
-						$c = sanitize_hex_color( $item['color'] );
-					} elseif ( is_string( $item ) ) {
-						$c = sanitize_hex_color( $item );
-					}
-					if ( $c ) {
-						$kadence_first_3[] = strtoupper( $c );
-					}
-				}
+					$palette_items  = array_values( $palette_list );
+					$kadence_colors = array();
+					$count          = count( $palette_items );
 
-				if ( ! empty( $kadence_first_3 ) ) {
-					$theme_colors = $kadence_first_3;
+					$extract_hex = function ( $item ) {
+						$c = '';
+						if ( is_array( $item ) && ! empty( $item['color'] ) ) {
+							$c = sanitize_hex_color( $item['color'] );
+						} elseif ( is_string( $item ) ) {
+							$c = sanitize_hex_color( $item );
+						}
+						return $c ? strtoupper( $c ) : '';
+					};
+
+					// 1. Always include palette1 and palette2 (user accents 1 & 2).
+					if ( isset( $palette_items[0] ) ) {
+						$c1 = $extract_hex( $palette_items[0] );
+						if ( $c1 ) {
+							$kadence_colors[] = $c1;
+						}
+					}
+					if ( isset( $palette_items[1] ) ) {
+						$c2 = $extract_hex( $palette_items[1] );
+						if ( $c2 && ! in_array( $c2, $kadence_colors, true ) ) {
+							$kadence_colors[] = $c2;
+						}
+					}
+
+					// 2. For the 3rd theme color, scan remaining slots (palette3..palette9),
+					// skipping Kadence default typography and neutral background colors.
+					$kadence_neutrals = array(
+						'#1A202C', '#2D3748', '#4A5568', '#718096', '#A0AEC0',
+						'#CBD5E0', '#E2E8F0', '#EDF2F7', '#F7FAFC', '#FFFFFF', '#FFF',
+						'#000000', '#000',
+					);
+
+					for ( $i = 2; $i < $count; $i++ ) {
+						$ci = $extract_hex( $palette_items[ $i ] );
+						if ( ! $ci ) {
+							continue;
+						}
+						if ( in_array( $ci, $kadence_neutrals, true ) || in_array( $ci, $kadence_colors, true ) ) {
+							continue;
+						}
+						$kadence_colors[] = $ci;
+						if ( count( $kadence_colors ) >= 3 ) {
+							break;
+						}
+					}
+
+					if ( ! empty( $kadence_colors ) ) {
+						$theme_colors = $kadence_colors;
+					}
 				}
-			}
 			}
 		}
 
@@ -324,6 +357,29 @@ class NTV_Settings {
 						}
 					}
 				}
+			}
+		}
+
+		// Ensure exactly 3 theme colors: if still fewer than 3, generate the harmonious 2nd cyan/blue shade.
+		if ( count( $theme_colors ) < 3 ) {
+			if ( ! empty( $theme_colors[0] ) ) {
+				$primary_hsl = self::hex_to_hsl( $theme_colors[0] );
+				$h = (float) $primary_hsl['h'];
+				if ( $h >= 170.0 && $h <= 225.0 ) {
+					$gen_3rd = '#008EC4';
+				} else {
+					$h_alt   = fmod( $h + 20.0, 360.0 );
+					$gen_3rd = strtoupper( self::hsl_to_hex( $h_alt, min( 1.0, max( 0.70, $primary_hsl['s'] ) ), max( 0.35, min( 0.55, $primary_hsl['l'] * 0.9 ) ) ) );
+				}
+				if ( ! in_array( $gen_3rd, $theme_colors, true ) ) {
+					$theme_colors[] = $gen_3rd;
+				} elseif ( ! in_array( '#008EC4', $theme_colors, true ) ) {
+					$theme_colors[] = '#008EC4';
+				} elseif ( ! in_array( '#0096C7', $theme_colors, true ) ) {
+					$theme_colors[] = '#0096C7';
+				}
+			} else {
+				$theme_colors = array( '#00A8E8', '#4A4A4A', '#008EC4' );
 			}
 		}
 

@@ -699,14 +699,14 @@ function pruneCache(cache, maxItems) {
 					<?php if ( ! empty( $icon_url ) ) : ?>
 						<img src="<?php echo esc_url( $icon_url ); ?>" alt="<?php echo esc_attr( $app_name ); ?>" class="ntv-install-app-icon" width="48" height="48">
 					<?php endif; ?>
-					<div class="ntv-install-info">
+					<div class="ntv-install-info ntv-install-text">
 						<h3 id="ntv-install-title" class="ntv-install-title"><?php echo esc_html( $app_name ); ?></h3>
 						<p id="ntv-install-desc" class="ntv-install-desc"><?php esc_html_e( 'برای دسترسی سریع‌تر و تجربه بومی، این اپلیکیشن را نصب کنید.', 'nativly' ); ?></p>
 					</div>
 				</div>
 				<div class="ntv-install-actions">
-					<button id="ntv-install-dismiss-btn" class="ntv-btn-secondary" type="button"><?php esc_html_e( 'بعداً', 'nativly' ); ?></button>
-					<button id="ntv-install-confirm-btn" class="ntv-btn-primary" type="button"><?php esc_html_e( 'نصب اپلیکیشن', 'nativly' ); ?></button>
+					<button id="ntv-install-dismiss-btn" class="ntv-btn-secondary ntv-install-btn-secondary" type="button"><?php esc_html_e( 'بعداً', 'nativly' ); ?></button>
+					<button id="ntv-install-confirm-btn" class="ntv-btn-primary ntv-install-btn-primary" type="button"><?php esc_html_e( 'نصب اپلیکیشن', 'nativly' ); ?></button>
 				</div>
 			</div>
 
@@ -719,14 +719,14 @@ function pruneCache(cache, maxItems) {
 						<?php endif; ?>
 						<div>
 							<h3 class="ntv-ios-title"><?php echo esc_html( $app_name ); ?></h3>
-							<p class="ntv-ios-subtitle"><?php esc_html_e( 'افزودن به صفحه اصلی (iOS Safari)', 'nativly' ); ?></p>
+							<p class="ntv-ios-subtitle"><?php esc_html_e( 'راهنمای نصب وب‌اپلیکیشن', 'nativly' ); ?></p>
 						</div>
 					</div>
 					<div class="ntv-ios-steps">
 						<div class="ntv-ios-step">
 							<span class="ntv-step-num">۱</span>
 							<div class="ntv-step-content">
-								<span><?php esc_html_e( 'دکمه اشتراک‌گذاری (Share) را در نوار پایین مرورگر سافاری لمس کنید:', 'nativly' ); ?></span>
+								<span><?php esc_html_e( 'از منوی مرورگر یا دکمه اشتراک‌گذاری (Share) را لمس کنید:', 'nativly' ); ?></span>
 								<svg class="ntv-share-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
 									<polyline points="16 6 12 2 8 6"></polyline>

@@ -1,5 +1,5 @@
 /**
- * Nativly - Frontend Expanding Glassmorphic Navbar, Smooth SPA Navigation & WooCommerce Sync
+ * Nativly - Frontend Expanding Glassmorphic Navbar, Native Navigation & WooCommerce Sync
  * Author: Arsalan Jabarzare
  */
 
@@ -39,9 +39,9 @@
   }
 
   /**
-   * Check if a URL is eligible for SPA navigation
+   * Check if a URL is eligible for prefetching
    */
-  function isSpaEligible(urlStr) {
+  function isPrefetchEligible(urlStr) {
     if (!urlStr || urlStr === '#' || urlStr.startsWith('javascript:') || urlStr.startsWith('tel:') || urlStr.startsWith('mailto:')) {
       return false;
     }
@@ -69,7 +69,7 @@
         return false;
       }
 
-      // Exclude WooCommerce checkout (full page reload is safer for gateways)
+      // Exclude WooCommerce checkout
       if (path.includes('/checkout') || search.includes('wc-api=')) {
         return false;
       }
@@ -90,7 +90,7 @@
    * Prefetch a URL via <link rel="prefetch">
    */
   function prefetchUrl(urlStr) {
-    if (!isSpaEligible(urlStr) || prefetchedUrls.has(urlStr)) {
+    if (!isPrefetchEligible(urlStr) || prefetchedUrls.has(urlStr)) {
       return;
     }
     prefetchedUrls.add(urlStr);
@@ -100,192 +100,6 @@
     link.href = urlStr;
     link.as = 'document';
     document.head.appendChild(link);
-  }
-
-  /**
-   * Find main content container for SPA swapping
-   */
-  function findMainContainer(doc) {
-    const candidateSelectors = [
-      '#inner-wrap',
-      'main#main',
-      '#content',
-      '#primary',
-      '.site-content',
-      'main',
-      '.elementor'
-    ];
-
-    for (let i = 0; i < candidateSelectors.length; i++) {
-      const el = doc.querySelector(candidateSelectors[i]);
-      if (el) {
-        return { el: el, selector: candidateSelectors[i] };
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Execute scripts contained in newly injected DOM container
-   */
-  function executeScripts(container) {
-    const scripts = container.querySelectorAll('script');
-    scripts.forEach(function (oldScript) {
-      const type = oldScript.getAttribute('type');
-      if (type && type !== 'text/javascript' && type !== 'application/javascript') {
-        return;
-      }
-      const newScript = document.createElement('script');
-      Array.from(oldScript.attributes).forEach(function (attr) {
-        newScript.setAttribute(attr.name, attr.value);
-      });
-      newScript.textContent = oldScript.textContent;
-      if (oldScript.parentNode) {
-        oldScript.parentNode.replaceChild(newScript, oldScript);
-      }
-    });
-  }
-
-  /**
-   * Synchronize active state of navbar items based on target URL
-   */
-  function syncNavbarActiveState(urlStr) {
-    try {
-      const targetUrl = new URL(urlStr, window.location.origin);
-      const targetPath = targetUrl.pathname.replace(/\/+$/, '') || '/';
-
-      const mainNavItems = document.querySelectorAll('.ntv-nav-item:not(.ntv-more-trigger)');
-      const bubbleItems = document.querySelectorAll('.ntv-bubble-item');
-      const moreTrigger = document.getElementById('ntv-more-trigger');
-
-      let bubbleMatched = false;
-      let mainMatched = false;
-
-      bubbleItems.forEach(function (item) {
-        const href = item.getAttribute('href');
-        if (!href) return;
-        const itemUrl = new URL(href, window.location.origin);
-        const itemPath = itemUrl.pathname.replace(/\/+$/, '') || '/';
-        if (itemPath === targetPath) {
-          item.classList.add('is-active');
-          item.setAttribute('aria-current', 'page');
-          bubbleMatched = true;
-        } else {
-          item.classList.remove('is-active');
-          item.removeAttribute('aria-current');
-        }
-      });
-
-      if (bubbleMatched) {
-        if (moreTrigger) {
-          moreTrigger.classList.add('is-active');
-          moreTrigger.setAttribute('aria-current', 'page');
-        }
-        mainNavItems.forEach(function (item) {
-          item.classList.remove('is-active');
-          item.removeAttribute('aria-current');
-        });
-      } else {
-        if (moreTrigger) {
-          moreTrigger.classList.remove('is-active');
-          moreTrigger.removeAttribute('aria-current');
-        }
-        mainNavItems.forEach(function (item) {
-          const href = item.getAttribute('href');
-          if (!href) return;
-          const itemUrl = new URL(href, window.location.origin);
-          const itemPath = itemUrl.pathname.replace(/\/+$/, '') || '/';
-          if (!mainMatched && itemPath === targetPath) {
-            item.classList.add('is-active');
-            item.setAttribute('aria-current', 'page');
-            mainMatched = true;
-          } else {
-            item.classList.remove('is-active');
-            item.removeAttribute('aria-current');
-          }
-        });
-      }
-    } catch (e) {
-      // Quiet fail
-    }
-  }
-
-  /**
-   * SPA Navigation Controller
-   */
-  function navigateSpa(url, pushState) {
-    startTopLoader();
-
-    fetch(url, { credentials: 'same-origin' })
-      .then(function (res) {
-        if (!res.ok) {
-          throw new Error('Network error status: ' + res.status);
-        }
-        return res.text();
-      })
-      .then(function (html) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        const currentTarget = findMainContainer(document);
-        if (!currentTarget) {
-          window.location.href = url;
-          return;
-        }
-
-        const newTarget = doc.querySelector(currentTarget.selector) || findMainContainer(doc)?.el;
-        if (!newTarget) {
-          window.location.href = url;
-          return;
-        }
-
-        // Update document title
-        if (doc.title) {
-          document.title = doc.title;
-        }
-
-        // Update body classes
-        if (doc.body && doc.body.className) {
-          document.body.className = doc.body.className;
-        }
-
-        // Replace content
-        currentTarget.el.innerHTML = newTarget.innerHTML;
-
-        // Execute scripts inside content
-        executeScripts(currentTarget.el);
-
-        // Update browser history
-        if (pushState) {
-          window.history.pushState({ url: url }, '', url);
-        }
-
-        // Scroll smoothly to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // Update active tab in navbar
-        syncNavbarActiveState(url);
-
-        // Notify PWA install prompt of page view
-        if (window.ntvIncrementPageView) {
-          window.ntvIncrementPageView();
-        }
-
-        // Trigger standard WordPress & WooCommerce events
-        if (window.jQuery) {
-          window.jQuery(document).trigger('DOMContentLoaded');
-          window.jQuery(document.body).trigger('wc_fragment_refresh');
-          window.jQuery(document.body).trigger('post-load');
-        }
-        window.dispatchEvent(new Event('DOMContentLoaded'));
-
-        finishTopLoader();
-      })
-      .catch(function (err) {
-        console.warn('[Nativly SPA] Fetch failed, fallback to reload:', err);
-        finishTopLoader();
-        window.location.href = url;
-      });
   }
 
   /**
@@ -375,7 +189,7 @@
       });
     }
 
-    // Prefetching & SPA Click Listener for all Navbar and Bubble links
+    // Prefetching & Native Click Listener for all Navbar and Bubble links
     const allLinks = document.querySelectorAll('.ntv-nav-item:not(.ntv-more-trigger), .ntv-nav-link, .ntv-bubble-item');
 
     allLinks.forEach(function (el) {
@@ -391,25 +205,28 @@
         prefetchUrl(href);
       }, { passive: true });
 
-      // Handle SPA Click
+      // Handle Click: Instant visual feedback and clean native navigation
       el.addEventListener('click', function (e) {
-        if (!isSpaEligible(href)) {
+        if (!href || href === '#' || href.startsWith('javascript:')) {
           return;
         }
 
-        const targetUrl = new URL(href, window.location.origin);
-        // If clicking currently active page, just scroll to top
-        if (targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) {
-          e.preventDefault();
-          closeBubblePopover();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+        try {
+          const targetUrl = new URL(href, window.location.origin);
+          // If clicking currently active page, just scroll to top
+          if (targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) {
+            e.preventDefault();
+            closeBubblePopover();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+        } catch (err) {
           return;
         }
 
-        e.preventDefault();
         closeBubblePopover();
 
-        // Immediately update active pill state for instant feedback
+        // Immediately update active pill state for instant visual feedback
         navItems.forEach(function (sibling) {
           sibling.classList.remove('is-active');
           sibling.removeAttribute('aria-current');
@@ -421,13 +238,11 @@
           activeTarget.setAttribute('aria-current', 'page');
         }
 
-        navigateSpa(targetUrl.href, true);
-      });
-    });
+        // Show top loader for brief progress indication before native page transitions
+        startTopLoader();
 
-    // Handle browser Back / Forward navigation (popstate)
-    window.addEventListener('popstate', function () {
-      navigateSpa(window.location.href, false);
+        // Browser executes native navigation via regular link click
+      });
     });
 
     // Initialize WooCommerce cart count syncing if present
