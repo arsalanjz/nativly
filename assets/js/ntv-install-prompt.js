@@ -89,7 +89,7 @@
       return;
     }
 
-    const versionKey = (config.cacheVersion || '1.9.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const versionKey = (config.cacheVersion || '2.0.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
     const storageKeyDismissed = 'ntv_pwa_dismissed_' + versionKey;
     const dismissedAt = parseInt(localStorage.getItem(storageKeyDismissed) || '0', 10);
     if (dismissedAt) {
@@ -110,12 +110,13 @@
     }
 
     let deferredPrompt = null;
-    const installCard = document.getElementById('ntv-install-card');
+    const installBanner = document.getElementById('ntv-install-prompt-banner') || document.getElementById('ntv-install-card');
+    const installCard = installBanner;
     const installDesc = document.getElementById('ntv-install-desc');
     const confirmBtn = document.getElementById('ntv-install-confirm-btn');
     const dismissBtn = document.getElementById('ntv-install-dismiss-btn');
     const closeXBtn = document.getElementById('ntv-install-close-x');
-    const iosModal = document.getElementById('ntv-ios-modal-backdrop') || document.getElementById('ntv-ios-guide-modal') || document.querySelector('.ntv-ios-guide-modal');
+    const iosModal = document.getElementById('ntv-ios-guide-modal') || document.getElementById('ntv-ios-modal-backdrop') || document.querySelector('.ntv-ios-guide-modal');
     const iosCloseBtn = document.getElementById('ntv-ios-close-btn');
 
     // Chromium beforeinstallprompt event
@@ -125,7 +126,13 @@
     });
 
     function dismissPrompt() {
-      if (installCard) {
+      const banner = document.getElementById('ntv-install-prompt-banner') || installCard;
+      if (banner) {
+        banner.classList.remove('is-visible');
+        banner.setAttribute('aria-hidden', 'true');
+        banner.style.display = 'none';
+      }
+      if (installCard && installCard !== banner) {
         installCard.classList.remove('is-visible');
         installCard.setAttribute('aria-hidden', 'true');
         installCard.style.display = 'none';
@@ -133,30 +140,42 @@
       if (iosModal) {
         iosModal.classList.remove('is-visible');
         iosModal.setAttribute('aria-hidden', 'true');
-        iosModal.style.display = 'none';
+        iosModal.style.cssText = 'display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important;';
       }
       localStorage.setItem(storageKeyDismissed, Date.now().toString());
     }
 
-    function openIosModal() {
-      if (installCard) {
+    function openIosGuide() {
+      const banner = document.getElementById('ntv-install-prompt-banner') || installCard;
+      if (banner) {
+        banner.classList.remove('is-visible');
+        banner.setAttribute('aria-hidden', 'true');
+        banner.style.display = 'none';
+      }
+      if (installCard && installCard !== banner) {
         installCard.classList.remove('is-visible');
         installCard.setAttribute('aria-hidden', 'true');
         installCard.style.display = 'none';
       }
       if (iosModal) {
-        iosModal.classList.add('is-visible');
+        if (iosModal.parentNode !== document.body) {
+          document.body.appendChild(iosModal);
+        }
         iosModal.setAttribute('aria-hidden', 'false');
-        iosModal.style.display = 'flex';
+        iosModal.classList.add('is-visible');
+        iosModal.style.cssText = 'position: fixed !important; inset: 0 !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 2147483647 !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(10, 10, 18, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; padding: 20px !important; box-sizing: border-box !important;';
       }
     }
+    const openIosModal = openIosGuide;
 
-    const iosGotItBtn = document.getElementById('ntv-ios-got-it-btn') || document.querySelector('.ntv-ios-got-it-btn');
+    const modalCloseBtns = document.querySelectorAll('.ntv-modal-close, .ntv-ios-got-it, .ntv-ios-got-it-btn, #ntv-ios-close-btn');
+    modalCloseBtns.forEach(function (btn) {
+      btn.addEventListener('click', dismissPrompt);
+    });
 
     if (dismissBtn) dismissBtn.addEventListener('click', dismissPrompt);
     if (closeXBtn) closeXBtn.addEventListener('click', dismissPrompt);
     if (iosCloseBtn) iosCloseBtn.addEventListener('click', dismissPrompt);
-    if (iosGotItBtn && iosGotItBtn !== iosCloseBtn) iosGotItBtn.addEventListener('click', dismissPrompt);
 
     if (iosModal) {
       iosModal.addEventListener('click', function (e) {

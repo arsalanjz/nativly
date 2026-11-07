@@ -693,7 +693,7 @@ function pruneCache(cache, maxItems) {
 		<!-- Nativly PWA Install Prompt Shell -->
 		<div id="ntv-pwa-toast-container" class="ntv-pwa-container" dir="<?php echo esc_attr( $dir_attr ); ?>">
 			<!-- Android / Chromium / Mobile Install Card -->
-			<div id="ntv-install-card" class="ntv-glass-install-card ntv-install-prompt-banner ntv-install-card" style="display: none;" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="ntv-install-title">
+			<div id="ntv-install-prompt-banner" class="ntv-glass-install-card ntv-install-prompt-banner ntv-install-card" style="display: none;" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="ntv-install-title">
 				<button id="ntv-install-close-x" class="ntv-install-close-x" type="button" aria-label="<?php esc_attr_e( 'بستن', 'nativly' ); ?>">&times;</button>
 				<div class="ntv-install-header">
 					<?php if ( ! empty( $icon_url ) ) : ?>
@@ -711,8 +711,9 @@ function pruneCache(cache, maxItems) {
 			</div>
 
 			<!-- iOS Safari "Add to Home Screen" Visual Modal -->
-			<div id="ntv-ios-modal-backdrop" class="ntv-ios-backdrop ntv-ios-guide-modal" style="display: none;" aria-hidden="true">
+			<div id="ntv-ios-guide-modal" class="ntv-ios-backdrop ntv-ios-guide-modal" style="display: none;" aria-hidden="true">
 				<div id="ntv-ios-modal" class="ntv-glass-ios-modal ntv-ios-modal-card" role="dialog" aria-modal="true">
+					<button class="ntv-modal-close ntv-install-close-x" type="button" aria-label="<?php esc_attr_e( 'بستن', 'nativly' ); ?>">&times;</button>
 					<div class="ntv-ios-header">
 						<?php if ( ! empty( $icon_url ) ) : ?>
 							<img src="<?php echo esc_url( $icon_url ); ?>" alt="<?php echo esc_attr( $app_name ); ?>" class="ntv-ios-app-icon" width="56" height="56">
@@ -749,7 +750,7 @@ function pruneCache(cache, maxItems) {
 							</div>
 						</div>
 					</div>
-					<button id="ntv-ios-close-btn" class="ntv-btn-primary ntv-btn-block ntv-ios-got-it-btn" type="button"><?php esc_html_e( 'متوجه شدم', 'nativly' ); ?></button>
+					<button id="ntv-ios-close-btn" class="ntv-btn-primary ntv-btn-block ntv-ios-got-it-btn ntv-ios-got-it" type="button"><?php esc_html_e( 'متوجه شدم', 'nativly' ); ?></button>
 				</div>
 			</div>
 		</div>
