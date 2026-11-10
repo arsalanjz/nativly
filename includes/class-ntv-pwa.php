@@ -11,8 +11,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class NTV_PWA
  *
- * Manages Web App Manifest generation, root Service Worker generation,
- * image icon resizing, iOS Safari home screen meta tags, and install prompt assets.
+ * Manages Web App Manifest generation, root Service Worker generation,\n * image icon resizing, iOS Safari home screen meta tags, and install prompt assets.
  */
 class NTV_PWA {
 
@@ -127,8 +126,8 @@ class NTV_PWA {
 		$app_name       = ! empty( $settings['app_name'] ) ? $settings['app_name'] : $site_title;
 		$app_short_name = ! empty( $settings['app_short_name'] ) ? $settings['app_short_name'] : $site_title;
 		$app_desc       = ! empty( $settings['app_description'] ) ? $settings['app_description'] : $site_desc;
-		$theme_color    = ! empty( $settings['theme_color'] ) ? $settings['theme_color'] : '#0047FF';
-		$bg_color       = ! empty( $settings['background_color'] ) ? $settings['background_color'] : '#121218';
+		$theme_color    = ! empty( $settings['theme_color'] ) ? $settings['theme_color'] : '#ffffff';
+		$bg_color       = ! empty( $settings['background_color'] ) ? $settings['background_color'] : '#ffffff';
 
 		$manifest = array(
 			'id'               => $scope_path,
@@ -290,8 +289,7 @@ const PRECACHE_ASSETS = [
 
 // Offline fallback HTML response (in Persian RTL and English).
 const BUILTIN_OFFLINE_HTML = `<!DOCTYPE html>
-<html dir="<?php echo is_rtl() ? 'rtl' : 'ltr'; ?>" lang="<?php echo esc_attr( get_bloginfo( 'language' ) ); ?>">
-<head>
+<html dir="<?php echo is_rtl() ? 'rtl' : 'ltr'; ?>" lang="<?php echo esc_attr( get_bloginfo( 'language' ) ); ?>"><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title><?php esc_html_e( 'No Connection', 'nativly' ); ?></title>
@@ -592,7 +590,6 @@ function pruneCache(cache, maxItems) {
 
 		$site_title     = get_bloginfo( 'name' );
 		$app_short_name = ! empty( $settings['app_short_name'] ) ? $settings['app_short_name'] : $site_title;
-		$theme_color    = ! empty( $settings['theme_color'] ) ? $settings['theme_color'] : '#0047FF';
 		$manifest_url   = home_url( '/ntv-manifest.json' );
 		$icon_180       = ! empty( $settings['pwa_icon_180'] ) ? $settings['pwa_icon_180'] : '';
 
@@ -603,7 +600,9 @@ function pruneCache(cache, maxItems) {
 
 		echo "\n<!-- Nativly PWA & iOS Safari Meta Tags -->\n";
 		echo '<link rel="manifest" href="' . esc_url( $manifest_url ) . '">' . "\n";
-		echo '<meta name="theme-color" content="' . esc_attr( $theme_color ) . '">' . "\n";
+		if ( ! empty( $settings['theme_color'] ) ) {
+			echo '<meta name="theme-color" content="' . esc_attr( $settings['theme_color'] ) . '">' . "\n";
+		}
 		echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . "\n";

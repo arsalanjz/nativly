@@ -89,7 +89,7 @@
       return;
     }
 
-    const versionKey = (config.cacheVersion || '2.0.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const versionKey = (config.cacheVersion || '2.1.0').toString().replace(/[^a-zA-Z0-9_.-]/g, '_');
     const storageKeyDismissed = 'ntv_pwa_dismissed_' + versionKey;
     const dismissedAt = parseInt(localStorage.getItem(storageKeyDismissed) || '0', 10);
     if (dismissedAt) {

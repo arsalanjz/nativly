@@ -77,6 +77,27 @@ class NTV_Settings {
 	 * @param int    $default_opacity Default fallback opacity percent.
 	 * @return array{hex: string, opacity: int}
 	 */
+	/**
+	 * Sanitize either a HEX color (#fff, #ffffff, #ffffffaa) or an RGBA/RGB color string.
+	 *
+	 * @param string $color   Input color value.
+	 * @param string $default Fallback value if invalid.
+	 * @return string
+	 */
+	public static function sanitize_rgba_or_hex( $color, $default = '' ) {
+		$color = trim( (string) $color );
+		if ( empty( $color ) ) {
+			return $default;
+		}
+		if ( preg_match( '/^#([a-f0-9]{3,8})$/i', $color ) ) {
+			return $color;
+		}
+		if ( preg_match( '/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:[0-9]*\.)?[0-9]+\s*)?\)$/i', $color ) ) {
+			return $color;
+		}
+		return $default;
+	}
+
 	public static function parse_color_and_opacity( $color, $default_hex = '#FFFFFF', $default_opacity = 100 ) {
 		$color = trim( (string) $color );
 		if ( preg_match( '/rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([0-9.]+)\s*\)/i', $color, $matches ) ) {
@@ -720,8 +741,8 @@ class NTV_Settings {
 
 		// 2. Glass Styling & Presets.
 		$clean['active_preset']       = sanitize_key( $input['active_preset'] ?? 'dark_liquid' );
-		$clean['active_pill_bg']      = sanitize_hex_color( $input['active_pill_bg'] ?? '#0047FF' ) ?: '#0047FF';
-		$clean['active_text_color']   = sanitize_hex_color( $input['active_text_color'] ?? '#FFFFFF' ) ?: '#FFFFFF';
+		$clean['active_pill_bg']      = self::sanitize_rgba_or_hex( $input['active_pill_bg'] ?? '', '#0047FF' );
+		$clean['active_text_color']   = self::sanitize_rgba_or_hex( $input['active_text_color'] ?? '', '#FFFFFF' );
 		$clean['inactive_icon_color'] = sanitize_text_field( $input['inactive_icon_color'] ?? 'rgba(255, 255, 255, 0.7)' );
 		$clean['glass_bg_color']      = sanitize_text_field( $input['glass_bg_color'] ?? 'rgba(18, 18, 24, 0.82)' );
 		$clean['glass_border_color']  = sanitize_text_field( $input['glass_border_color'] ?? 'rgba(255, 255, 255, 0.12)' );
@@ -763,8 +784,8 @@ class NTV_Settings {
 		$clean['app_name']                    = sanitize_text_field( $input['app_name'] ?? get_bloginfo( 'name' ) );
 		$clean['app_short_name']              = sanitize_text_field( $input['app_short_name'] ?? get_bloginfo( 'name' ) );
 		$clean['app_description']             = sanitize_textarea_field( $input['app_description'] ?? get_bloginfo( 'description' ) );
-		$clean['theme_color']                 = sanitize_hex_color( $input['theme_color'] ?? '#0047FF' ) ?: '#0047FF';
-		$clean['background_color']            = sanitize_hex_color( $input['background_color'] ?? '#121218' ) ?: '#121218';
+		$clean['theme_color']                 = ! empty( $input['theme_color'] ) ? ( sanitize_hex_color( $input['theme_color'] ) ?: '' ) : '';
+		$clean['background_color']            = ! empty( $input['background_color'] ) ? ( sanitize_hex_color( $input['background_color'] ) ?: '#ffffff' ) : '#ffffff';
 		$clean['pwa_icon_id']                 = isset( $input['pwa_icon_id'] ) ? absint( $input['pwa_icon_id'] ) : 0;
 		$clean['pwa_icon_512']                = esc_url_raw( $input['pwa_icon_512'] ?? '' );
 		$clean['pwa_icon_192']                = esc_url_raw( $input['pwa_icon_192'] ?? '' );
@@ -774,6 +795,14 @@ class NTV_Settings {
 		$clean['install_prompt_delay']        = isset( $input['install_prompt_delay'] ) ? absint( $input['install_prompt_delay'] ) : 3;
 		$clean['install_prompt_min_views']    = isset( $input['install_prompt_min_views'] ) ? absint( $input['install_prompt_min_views'] ) : 2;
 		$clean['install_prompt_cooldown_days'] = isset( $input['install_prompt_cooldown_days'] ) ? absint( $input['install_prompt_cooldown_days'] ) : 7;
+
+		// PWA Custom Styling.
+		$clean['pwa_custom_style_enable']     = ! empty( $input['pwa_custom_style_enable'] ) ? 1 : 0;
+		$clean['pwa_bg_color']                = self::sanitize_rgba_or_hex( $input['pwa_bg_color'] ?? '', 'rgba(18, 20, 28, 0.95)' );
+		$clean['pwa_text_color']              = self::sanitize_rgba_or_hex( $input['pwa_text_color'] ?? '', '#ffffff' );
+		$clean['pwa_btn_bg']                  = self::sanitize_rgba_or_hex( $input['pwa_btn_bg'] ?? '', '#00a8e8' );
+		$clean['pwa_btn_text']                = self::sanitize_rgba_or_hex( $input['pwa_btn_text'] ?? '', '#ffffff' );
+		$clean['pwa_blur']                    = isset( $input['pwa_blur'] ) ? min( 100, max( 0, absint( $input['pwa_blur'] ) ) ) : 50;
 
 		// 5. General & Uninstall.
 		$clean['delete_data_on_uninstall'] = ! empty( $input['delete_data_on_uninstall'] ) ? 1 : 0;
@@ -1096,6 +1125,8 @@ class NTV_Settings {
 
 								<?php
 								$site_palette    = self::get_site_palette();
+								$parsed_pill_bg  = self::parse_color_and_opacity( $settings['active_pill_bg'], '#0047FF', 100 );
+								$parsed_pill_txt = self::parse_color_and_opacity( $settings['active_text_color'], '#FFFFFF', 100 );
 								$parsed_inactive = self::parse_color_and_opacity( $settings['inactive_icon_color'], '#FFFFFF', 70 );
 								$parsed_bg       = self::parse_color_and_opacity( $settings['glass_bg_color'], '#121218', 82 );
 								$parsed_border   = self::parse_color_and_opacity( $settings['glass_border_color'], '#FFFFFF', 12 );
@@ -1103,12 +1134,18 @@ class NTV_Settings {
 
 								<div class="ntv-color-rows-wrap">
 									<!-- Row 1: Active Pill Background -->
-									<div class="ntv-color-row-inline" data-target="ntv-active-pill-bg">
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-active-pill-bg">
 										<div class="ntv-color-row-label">
-											<label for="ntv-active-pill-bg"><?php esc_html_e( 'رنگ پس‌زمینه کپسول فعال:', 'nativly' ); ?></label>
+											<label><?php esc_html_e( 'رنگ پس‌زمینه کپسول فعال:', 'nativly' ); ?></label>
 										</div>
 										<div class="ntv-color-row-controls">
-											<input type="text" name="ntv_settings[active_pill_bg]" id="ntv-active-pill-bg" value="<?php echo esc_attr( $settings['active_pill_bg'] ); ?>" class="ntv-color-picker" data-default-color="#0047FF">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_pill_bg['hex'] ); ?>" data-default-color="#0047FF">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_pill_bg['opacity'] ); ?>">
+												<span class="ntv-opacity-val" id="ntv-active-pill-opacity-val"><?php echo esc_html( (string) $parsed_pill_bg['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[active_pill_bg]" id="ntv-active-pill-bg" value="<?php echo esc_attr( $settings['active_pill_bg'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
 											<?php self::render_palette_swatches( $site_palette ); ?>
@@ -1116,12 +1153,18 @@ class NTV_Settings {
 									</div>
 
 									<!-- Row 2: Active Text & Icon -->
-									<div class="ntv-color-row-inline" data-target="ntv-active-text-color">
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-active-text-color">
 										<div class="ntv-color-row-label">
-											<label for="ntv-active-text-color"><?php esc_html_e( 'رنگ متن و آیکون کپسول فعال:', 'nativly' ); ?></label>
+											<label><?php esc_html_e( 'رنگ متن و آیکون کپسول فعال:', 'nativly' ); ?></label>
 										</div>
 										<div class="ntv-color-row-controls">
-											<input type="text" name="ntv_settings[active_text_color]" id="ntv-active-text-color" value="<?php echo esc_attr( $settings['active_text_color'] ); ?>" class="ntv-color-picker" data-default-color="#FFFFFF">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_pill_txt['hex'] ); ?>" data-default-color="#FFFFFF">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_pill_txt['opacity'] ); ?>">
+												<span class="ntv-opacity-val" id="ntv-active-text-opacity-val"><?php echo esc_html( (string) $parsed_pill_txt['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[active_text_color]" id="ntv-active-text-color" value="<?php echo esc_attr( $settings['active_text_color'] ); ?>">
 										</div>
 										<div class="ntv-color-row-swatches">
 											<?php self::render_palette_swatches( $site_palette ); ?>
@@ -1423,14 +1466,34 @@ class NTV_Settings {
 									<textarea name="ntv_settings[app_description]" class="large-text" rows="2"><?php echo esc_textarea( $settings['app_description'] ); ?></textarea>
 								</div>
 
-								<div class="ntv-grid-2 ntv-mt-3">
-									<div class="ntv-field-group">
-										<label><?php esc_html_e( 'رنگ نوار مرورگر موبایل (Theme Color):', 'nativly' ); ?></label>
-										<input type="text" name="ntv_settings[theme_color]" value="<?php echo esc_attr( $settings['theme_color'] ); ?>" class="ntv-color-picker">
+								<?php $pwa_site_palette = self::get_site_palette(); ?>
+								<div class="ntv-color-rows-wrap ntv-mt-3">
+									<!-- Theme Color -->
+									<div class="ntv-color-row-inline" data-target="ntv-pwa-theme-color">
+										<div class="ntv-color-row-label">
+											<label for="ntv-pwa-theme-color"><?php esc_html_e( 'رنگ نوار مرورگر موبایل (Theme Color):', 'nativly' ); ?></label>
+											<p class="ntv-field-desc"><?php esc_html_e( 'رنگ نوار وضعیت مرورگر کروم و اندروید. اگر خالی بگذارید، مرورگر از رنگ پیش‌فرض سیستم استفاده می‌کند و نوار پایین آبی نخواهد شد.', 'nativly' ); ?></p>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" name="ntv_settings[theme_color]" id="ntv-pwa-theme-color" value="<?php echo esc_attr( $settings['theme_color'] ); ?>" class="ntv-color-picker" data-default-color="">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php self::render_palette_swatches( $pwa_site_palette ); ?>
+										</div>
 									</div>
-									<div class="ntv-field-group">
-										<label><?php esc_html_e( 'رنگ پس‌زمینه اسپلش‌اسکرین (Background Color):', 'nativly' ); ?></label>
-										<input type="text" name="ntv_settings[background_color]" value="<?php echo esc_attr( $settings['background_color'] ); ?>" class="ntv-color-picker">
+
+									<!-- Background Color -->
+									<div class="ntv-color-row-inline" data-target="ntv-pwa-bg-color-field">
+										<div class="ntv-color-row-label">
+											<label for="ntv-pwa-bg-color-field"><?php esc_html_e( 'رنگ پس‌زمینه اسپلش‌اسکرین (Background Color):', 'nativly' ); ?></label>
+											<p class="ntv-field-desc"><?php esc_html_e( 'رنگ پس‌زمینه هنگام باز شدن اپلیکیشن قبل از لود شدن کامل صفحات.', 'nativly' ); ?></p>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" name="ntv_settings[background_color]" id="ntv-pwa-bg-color-field" value="<?php echo esc_attr( $settings['background_color'] ); ?>" class="ntv-color-picker" data-default-color="#ffffff">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php self::render_palette_swatches( $pwa_site_palette ); ?>
+										</div>
 									</div>
 								</div>
 
@@ -1478,6 +1541,114 @@ class NTV_Settings {
 									<div class="ntv-field-group">
 										<label><?php esc_html_e( 'توقف نمایش پس از رد کردن (روز):', 'nativly' ); ?></label>
 										<input type="number" name="ntv_settings[install_prompt_cooldown_days]" value="<?php echo esc_attr( (string) $settings['install_prompt_cooldown_days'] ); ?>" min="1" max="90" class="small-text">
+									</div>
+								</div>
+
+								<!-- PWA Custom Style Toggle & Controls -->
+								<div class="ntv-divider ntv-mt-4"></div>
+								<label class="ntv-switch-label ntv-mt-3">
+									<input type="checkbox" name="ntv_settings[pwa_custom_style_enable]" id="ntv-pwa-custom-style-enable" value="1" <?php checked( $settings['pwa_custom_style_enable'], 1 ); ?>>
+									<span><?php esc_html_e( 'شخصی‌سازی دستی رنگ و استایل کادر نصب و راهنمای وب‌اپلیکیشن', 'nativly' ); ?></span>
+								</label>
+
+								<div id="ntv-pwa-custom-style-box" class="ntv-color-rows-wrap ntv-mt-3" style="display: <?php echo ! empty( $settings['pwa_custom_style_enable'] ) ? 'block' : 'none'; ?>;">
+									<p class="ntv-field-desc" style="margin-bottom: 14px;"><?php esc_html_e( 'در صورت فعال‌سازی، رنگ‌بندی و شفافیت بنر نصب و پاپ‌آپ راهنمای iOS از این تنظیمات پیروی خواهد کرد و در غیر این صورت از رنگ شیشه نوبار ارث‌بری می‌کند.', 'nativly' ); ?></p>
+
+									<?php
+									$parsed_pwa_bg       = self::parse_color_and_opacity( $settings['pwa_bg_color'], '#12141C', 95 );
+									$parsed_pwa_text     = self::parse_color_and_opacity( $settings['pwa_text_color'], '#FFFFFF', 100 );
+									$parsed_pwa_btn_bg   = self::parse_color_and_opacity( $settings['pwa_btn_bg'], '#00A8E8', 100 );
+									$parsed_pwa_btn_text = self::parse_color_and_opacity( $settings['pwa_btn_text'], '#FFFFFF', 100 );
+									$pwa_blur_val        = isset( $settings['pwa_blur'] ) ? (int) $settings['pwa_blur'] : 50;
+									?>
+
+									<!-- PWA Control 1: Background -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-pwa-bg-color">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ پس‌زمینه کادر نصب و مودال iOS:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_pwa_bg['hex'] ); ?>" data-default-color="#12141C">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_pwa_bg['opacity'] ); ?>">
+												<span class="ntv-opacity-val" id="ntv-pwa-bg-opacity-val"><?php echo esc_html( (string) $parsed_pwa_bg['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[pwa_bg_color]" id="ntv-pwa-bg-color" value="<?php echo esc_attr( $settings['pwa_bg_color'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php self::render_palette_swatches( $pwa_site_palette ); ?>
+										</div>
+									</div>
+
+									<!-- PWA Control 2: Text Color -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-pwa-text-color">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ متن و عنوان‌ها:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_pwa_text['hex'] ); ?>" data-default-color="#FFFFFF">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_pwa_text['opacity'] ); ?>">
+												<span class="ntv-opacity-val" id="ntv-pwa-text-opacity-val"><?php echo esc_html( (string) $parsed_pwa_text['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[pwa_text_color]" id="ntv-pwa-text-color" value="<?php echo esc_attr( $settings['pwa_text_color'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php self::render_palette_swatches( $pwa_site_palette ); ?>
+										</div>
+									</div>
+
+									<!-- PWA Control 3: Button Background -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-pwa-btn-bg">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ پس‌زمینه دکمه اقدام اصلی:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_pwa_btn_bg['hex'] ); ?>" data-default-color="#00A8E8">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_pwa_btn_bg['opacity'] ); ?>">
+												<span class="ntv-opacity-val" id="ntv-pwa-btn-bg-opacity-val"><?php echo esc_html( (string) $parsed_pwa_btn_bg['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[pwa_btn_bg]" id="ntv-pwa-btn-bg" value="<?php echo esc_attr( $settings['pwa_btn_bg'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php self::render_palette_swatches( $pwa_site_palette ); ?>
+										</div>
+									</div>
+
+									<!-- PWA Control 4: Button Text -->
+									<div class="ntv-color-row-inline ntv-color-with-opacity" data-target="ntv-pwa-btn-text">
+										<div class="ntv-color-row-label">
+											<label><?php esc_html_e( 'رنگ متن دکمه اقدام اصلی:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<input type="text" class="ntv-color-picker ntv-rgba-base-color" value="<?php echo esc_attr( $parsed_pwa_btn_text['hex'] ); ?>" data-default-color="#FFFFFF">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline">
+												<span class="ntv-opacity-slider-title"><?php esc_html_e( 'شفافیت:', 'nativly' ); ?></span>
+												<input type="range" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $parsed_pwa_btn_text['opacity'] ); ?>">
+												<span class="ntv-opacity-val" id="ntv-pwa-btn-text-opacity-val"><?php echo esc_html( (string) $parsed_pwa_btn_text['opacity'] ); ?>%</span>
+											</div>
+											<input type="hidden" name="ntv_settings[pwa_btn_text]" id="ntv-pwa-btn-text" value="<?php echo esc_attr( $settings['pwa_btn_text'] ); ?>">
+										</div>
+										<div class="ntv-color-row-swatches">
+											<?php self::render_palette_swatches( $pwa_site_palette ); ?>
+										</div>
+									</div>
+
+									<!-- PWA Control 5: Blur Slider -->
+									<div class="ntv-color-row-inline">
+										<div class="ntv-color-row-label">
+											<label for="ntv-pwa-blur"><?php esc_html_e( 'شدت بلور شیشه‌ای پس‌زمینه کادر:', 'nativly' ); ?></label>
+										</div>
+										<div class="ntv-color-row-controls">
+											<div class="ntv-opacity-control ntv-opacity-slider-inline" style="flex: 1;">
+												<input type="range" name="ntv_settings[pwa_blur]" id="ntv-pwa-blur" class="ntv-opacity-slider" min="0" max="100" step="1" value="<?php echo esc_attr( (string) $pwa_blur_val ); ?>" style="width: 100%;">
+												<span class="ntv-opacity-val" id="ntv-pwa-blur-val"><?php echo esc_html( (string) $pwa_blur_val ); ?>%</span>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>

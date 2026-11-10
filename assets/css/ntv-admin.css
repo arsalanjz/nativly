@@ -1311,10 +1311,12 @@
 .ntv-phone-screen .ntv-nav-item.is-active {
   background: var(--ntv-active-bg, var(--ntv-active-pill-bg, #0047FF)) !important;
   color: var(--ntv-active-text, var(--ntv-active-text-color, #FFFFFF)) !important;
+  box-shadow: none !important;
 }
 
 .ntv-phone-screen .ntv-nav-item.is-active .ntv-nav-link {
   color: var(--ntv-active-text, var(--ntv-active-text-color, #FFFFFF)) !important;
+  box-shadow: none !important;
 }
 
 .ntv-phone-screen .ntv-nav-item.is-active .ntv-nav-label,

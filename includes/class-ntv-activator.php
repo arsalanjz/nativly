@@ -222,8 +222,8 @@ class NTV_Activator {
 			'app_name'                  => ! empty( $site_title ) ? $site_title : 'Nativly App',
 			'app_short_name'            => ! empty( $site_title ) ? $site_title : 'Nativly',
 			'app_description'           => ! empty( $site_desc ) ? $site_desc : 'Progressive Web App',
-			'theme_color'               => '#0047FF',
-			'background_color'          => '#121218',
+			'theme_color'               => '',
+			'background_color'          => '#ffffff',
 			'pwa_icon_id'               => 0,
 			'pwa_icon_512'              => '',
 			'pwa_icon_192'              => '',
@@ -235,6 +235,14 @@ class NTV_Activator {
 			'install_prompt_delay'        => 3,
 			'install_prompt_min_views'    => 2,
 			'install_prompt_cooldown_days' => 7,
+
+			// PWA Custom Styling.
+			'pwa_custom_style_enable'     => 0,
+			'pwa_bg_color'                => 'rgba(18, 20, 28, 0.95)',
+			'pwa_text_color'              => '#ffffff',
+			'pwa_btn_bg'                  => '#00a8e8',
+			'pwa_btn_text'                => '#ffffff',
+			'pwa_blur'                    => 50,
 
 			// Data Retention on Deletion.
 			'delete_data_on_uninstall'  => 0,

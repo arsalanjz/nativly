@@ -101,6 +101,7 @@
     initThemeHeaderHidingToggle();
     initDiagnosticsHelp();
     initFormSubmission();
+    initPwaCustomStyles();
 
     // Initial Live Preview Build
     updateLivePreview();
@@ -291,7 +292,7 @@
       }
     });
 
-    $('#ntv-inactive-icon-color, #ntv-glass-bg-color, #ntv-glass-border-color').on('input change', function () {
+    $('#ntv-active-pill-bg, #ntv-active-text-color, #ntv-inactive-icon-color, #ntv-glass-bg-color, #ntv-glass-border-color').on('input change', function () {
       updateLivePreview();
     });
   }
@@ -316,6 +317,24 @@
       const val = $(this).val();
       $('#ntv-offset-val').text(val + '%');
       updateLivePreview();
+    });
+  }
+
+  /**
+   * PWA Custom Styling Controls (Tab 4)
+   */
+  function initPwaCustomStyles() {
+    $('#ntv-pwa-custom-style-enable').on('change', function () {
+      if ($(this).is(':checked')) {
+        $('#ntv-pwa-custom-style-box').slideDown(200);
+      } else {
+        $('#ntv-pwa-custom-style-box').slideUp(200);
+      }
+    });
+
+    $('#ntv-pwa-blur').on('input change', function () {
+      const val = $(this).val();
+      $('#ntv-pwa-blur-val').text(val + '%');
     });
   }
 
@@ -391,17 +410,8 @@
       $('#ntv-active-preset-input').val(presetKey);
 
       // Apply values to inputs
-      const activePill = $('#ntv-active-pill-bg');
-      activePill.val(p.pill_bg);
-      if (activePill.wpColorPicker) {
-        activePill.wpColorPicker('color', p.pill_bg);
-      }
-
-      const activeText = $('#ntv-active-text-color');
-      activeText.val(p.text_color);
-      if (activeText.wpColorPicker) {
-        activeText.wpColorPicker('color', p.text_color);
-      }
+      applyRgbaField('ntv-active-pill-bg', p.pill_bg, '#0047FF', 100);
+      applyRgbaField('ntv-active-text-color', p.text_color, '#FFFFFF', 100);
 
       applyRgbaField('ntv-inactive-icon-color', p.inactive_color, '#FFFFFF', 70);
       applyRgbaField('ntv-glass-bg-color', p.glass_bg, '#121218', 82);
@@ -1154,7 +1164,8 @@
     // Directly apply dynamic colors to active and inactive items
     previewList.find('.ntv-nav-item.is-active').css({
       'background': pillBg,
-      'color': textColor
+      'color': textColor,
+      'box-shadow': 'none'
     });
     previewList.find('.ntv-nav-item.is-active .ntv-label').css({
       'color': textColor
@@ -1178,7 +1189,8 @@
 
       $(this).addClass('is-active').css({
         'background': pillBg,
-        'color': textColor
+        'color': textColor,
+        'box-shadow': 'none'
       });
       $(this).find('.ntv-label').css({ 'color': textColor });
       $(this).find('svg').css({ 'stroke': textColor, 'color': textColor });
@@ -1208,7 +1220,8 @@
         $(this).addClass('is-open').css({
           'background': pillBg,
           'color': textColor,
-          'border-radius': '999px'
+          'border-radius': '999px',
+          'box-shadow': 'none'
         });
         $(this).find('svg').css({ 'stroke': textColor, 'color': textColor });
       }
